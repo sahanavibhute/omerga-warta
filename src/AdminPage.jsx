@@ -21,6 +21,7 @@ import {
   CheckCircle, 
   Upload,
   LogOut,
+  FileText,
   Image as ImageIcon
 } from 'lucide-react';
 
@@ -48,11 +49,23 @@ export default function AdminPage() {
     return saved ? JSON.parse(saved) : DEFAULT_RASHI;
   });
 
-  // Admin Tab: 'news' or 'rashi'
+  // E-Paper PDF State
+  const [epaperData, setEpaperData] = useState(() => {
+    const saved = localStorage.getItem('ow_epaper');
+    return saved ? JSON.parse(saved) : {
+      title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
+      date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+      pdfUrl: "",
+      fileName: ""
+    };
+  });
+
+  // Admin Tab: 'news', 'rashi', or 'epaper'
   const [adminTab, setAdminTab] = useState('news');
   const [editingNewsId, setEditingNewsId] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const fileInputRef = useRef(null);
+  const epaperPdfRef = useRef(null);
 
   // News Form Fields
   const [formNews, setFormNews] = useState({
@@ -79,6 +92,37 @@ export default function AdminPage() {
   useEffect(() => {
     localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
   }, [rashiList]);
+
+  useEffect(() => {
+    localStorage.setItem('ow_epaper', JSON.stringify(epaperData));
+  }, [epaperData]);
+
+  // E-Paper PDF Upload Handler
+  const handleEpaperPdfUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('कृपया फक्त PDF फाइल निवडा (Only PDF files allowed).');
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        alert('कृपया 20MB पेक्षा लहान PDF निवडा.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEpaperData(prev => ({
+          ...prev,
+          pdfUrl: reader.result,
+          fileName: file.name,
+          date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+        }));
+        showToast('ई-पेपर PDF यशस्वीरीत्या अपलोड झाली!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Sync selected rashi form
   useEffect(() => {
@@ -336,6 +380,12 @@ export default function AdminPage() {
           >
             <Sparkles size={18} /> राशी भविष्य अपडेट (Horoscope)
           </button>
+          <button 
+            className={`admin-tab-btn ${adminTab === 'epaper' ? 'active' : ''}`}
+            onClick={() => setAdminTab('epaper')}
+          >
+            <FileText size={18} /> ई-पेपर PDF अपलोड (E-Paper)
+          </button>
         </div>
 
         {/* TAB 1: NEWS */}
@@ -548,6 +598,77 @@ export default function AdminPage() {
                 राशी भविष्य सेव्ह करा
               </button>
             </form>
+          </div>
+        )}
+
+        {/* TAB 3: E-PAPER PDF UPLOAD */}
+        {adminTab === 'epaper' && (
+          <div className="admin-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <h3 className="admin-card-title">
+              <FileText size={20} color="#059669" />
+              आजचा डिजिटल ई-पेपर (PDF Upload)
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '18px' }}>
+              येथून तुम्ही आजच्या वर्तमानपत्राची PDF फाइल अपलोड करू शकता. अपलोड केल्यावर मुख्य पृष्ठावरील <strong>"ई-पेपर वाचा (PDF)"</strong> बटणावर क्लिक करून वाचक थेट ही PDF वाचू व डाउनलोड करू शकतील.
+            </p>
+
+            <div className="form-group">
+              <label>ई-पेपर आवृत्तीचे नाव / शीर्षक</label>
+              <input 
+                type="text" 
+                value={epaperData.title_mr}
+                onChange={(e) => setEpaperData({...epaperData, title_mr: e.target.value})}
+                placeholder="उदा. उमरगा वार्ता - मुख्य आवृत्ती"
+              />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '16px' }}>
+              <label>ई-पेपर PDF फाइल (Device मधून निवडा) *</label>
+              <div 
+                className="device-upload-dropzone"
+                style={{ borderColor: '#86efac', background: '#f0fdf4' }}
+                onClick={() => epaperPdfRef.current && epaperPdfRef.current.click()}
+              >
+                <input 
+                  type="file" 
+                  ref={epaperPdfRef}
+                  accept="application/pdf"
+                  onChange={handleEpaperPdfUpload}
+                  style={{ display: 'none' }}
+                />
+                <div className="device-empty-upload">
+                  <FileText size={42} color="#059669" />
+                  <p style={{ fontWeight: 700, margin: '8px 0 2px', fontSize: '1rem', color: '#065f46' }}>
+                    {epaperData.fileName ? `निवडलेली फाइल: ${epaperData.fileName}` : 'मोबाईल किंवा कॉम्प्युटरमधून PDF फाइल निवडा'}
+                  </p>
+                  <small style={{ color: '#059669' }}>
+                    {epaperData.pdfUrl ? '✓ PDF यशस्वीरीत्या जोडलेली आहे (फाइल बदलण्यासाठी पुन्हा क्लिक करा)' : 'फक्त .PDF फाइल (कमाल 20MB)'}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            {epaperData.pdfUrl && (
+              <div style={{ marginTop: '20px', padding: '14px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ color: '#065f46' }}>सध्याचा सक्रिय ई-पेपर:</strong>
+                    <div style={{ fontSize: '0.85rem', color: '#047857' }}>
+                      {epaperData.title_mr} | तारीख: {epaperData.date} ({epaperData.fileName || 'Active PDF'})
+                    </div>
+                  </div>
+                  <a 
+                    href={epaperData.pdfUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="btn-primary-action"
+                    style={{ background: '#059669', padding: '8px 16px', fontSize: '0.85rem' }}
+                  >
+                    PDF तपासा (Preview)
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
