@@ -225,6 +225,10 @@ export default function AdminPage() {
     const postTime = nowObj.toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     const formattedPostDateTime = `${todayDate} • ${postTime}`;
 
+    const autoTitleEn = autoTranslateMarathiToEnglish(formNews.title_mr);
+    const autoContentEn = autoTranslateMarathiToEnglish(formNews.content_mr);
+    const autoCategoryEn = autoTranslateCategory(formNews.category_mr);
+
     if (editingNewsId) {
       updateNewsInSupabase(editingNewsId, {
         title_mr: formNews.title_mr,
