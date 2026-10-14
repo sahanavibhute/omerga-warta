@@ -152,23 +152,6 @@ export default function PortalPage() {
               <p className="brand-rni">RNI NO-MAHMAR/2022/85957 | Regd. District Dharashiv</p>
             </div>
           </div>
-
-          <div className="bureau-card">
-            <div className="bureau-item">
-              <Mail size={16} className="bureau-icon" />
-              <div>
-                <span className="bureau-lbl">{t.contactEditor}</span>
-                <a href="mailto:mnimbarge@gmail.com" className="bureau-email">mnimbarge@gmail.com</a>
-              </div>
-            </div>
-            <div className="bureau-item">
-              <TrendingUp size={16} className="bureau-icon" />
-              <div>
-                <span className="bureau-lbl">डिजिटल डेस्क</span>
-                <span className="bureau-val">उमरगा व धाराशिव न्यूज नेटवर्क</span>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -228,6 +211,26 @@ export default function PortalPage() {
           </div>
           <div className="ticker-text-flow">
             <span>{breakingHeadline}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* BUREAU & NETWORK STRIP (PLACED CLEANLY BELOW HEADER / TICKER) */}
+      <div className="bureau-sub-bar">
+        <div className="container bureau-sub-inner">
+          <div className="bureau-item">
+            <TrendingUp size={16} className="bureau-icon" />
+            <div>
+              <span className="bureau-lbl">{lang === 'mr' ? 'डिजिटल डेस्क' : 'Digital Desk'}</span>
+              <span className="bureau-val">{lang === 'mr' ? 'उमरगा व धाराशिव न्यूज नेटवर्क' : 'Omerga & Dharashiv News Network'}</span>
+            </div>
+          </div>
+          <div className="bureau-item">
+            <Mail size={16} className="bureau-icon" />
+            <div>
+              <span className="bureau-lbl">{t.contactEditor}</span>
+              <a href="mailto:mnimbarge@gmail.com" className="bureau-email">mnimbarge@gmail.com</a>
+            </div>
           </div>
         </div>
       </div>
