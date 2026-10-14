@@ -634,7 +634,7 @@ export default function PortalPage() {
         </a>
 
         <a 
-          href="https://facebook.com" 
+          href="https://www.facebook.com/profile.php?id=100004806277045" 
           target="_blank" 
           rel="noopener noreferrer" 
           className="hanging-social-btn hanging-facebook"
