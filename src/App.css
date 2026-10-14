@@ -97,6 +97,93 @@
   color: #fbbf24;
 }
 
+/* Standalone Admin Lock Screen */
+.admin-lock-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 20px;
+}
+
+.admin-auth-card {
+  background: white;
+  max-width: 420px;
+  width: 100%;
+  padding: 35px 30px;
+  border-radius: 12px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.admin-lock-icon-wrap {
+  width: 70px;
+  height: 70px;
+  background: #e0f2fe;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.admin-lock-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand-blue);
+  line-height: 1.2;
+}
+
+.admin-lock-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.btn-back-home-text {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-back-home-text:hover {
+  color: var(--brand-blue);
+  text-decoration: underline;
+}
+
+/* Admin Dashboard Top Bar */
+.admin-top-bar {
+  background: #0f172a;
+  color: white;
+  padding: 12px 0;
+  border-bottom: 2px solid #1e293b;
+}
+
+.admin-top-bar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-brand-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-auth-tag {
+  display: block;
+  font-size: 0.75rem;
+  color: #10b981;
+  font-family: monospace;
+}
+
 .logout-btn {
   background: #dc2626;
   color: white;
