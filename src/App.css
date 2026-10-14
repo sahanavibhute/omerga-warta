@@ -1902,4 +1902,81 @@
   }
 }
 
+/* ==========================================================================
+   HANGING SOCIAL MEDIA BAR (RIGHT PANEL)
+   ========================================================================== */
+.hanging-social-bar {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 999;
+  box-shadow: -3px 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.hanging-social-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: #ffffff !important;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 8px 0 0 8px;
+  transform: translateX(calc(100% - 44px));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: -2px 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hanging-social-btn:hover {
+  transform: translateX(0);
+  padding-right: 18px;
+}
+
+.hanging-whatsapp {
+  background: linear-gradient(135deg, #25D366, #128C7E);
+}
+
+.hanging-facebook {
+  background: linear-gradient(135deg, #1877F2, #0d5bb5);
+}
+
+.hanging-youtube {
+  background: linear-gradient(135deg, #FF0000, #cc0000);
+}
+
+.hanging-blogspot {
+  background: linear-gradient(135deg, #FF5722, #e64a19);
+}
+
+.hanging-label {
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+@media (max-width: 768px) {
+  .hanging-social-bar {
+    top: auto;
+    bottom: 20px;
+    transform: none;
+    gap: 4px;
+  }
+
+  .hanging-social-btn {
+    padding: 8px 10px;
+    transform: translateX(calc(100% - 38px));
+  }
+
+  .hanging-social-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
 
