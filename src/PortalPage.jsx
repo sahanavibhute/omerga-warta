@@ -660,7 +660,7 @@ export default function PortalPage() {
         </a>
 
         <a 
-          href="https://blogger.com" 
+          href="https://umargawarta.blogspot.com/" 
           target="_blank" 
           rel="noopener noreferrer" 
           className="hanging-social-btn hanging-blogspot"
