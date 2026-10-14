@@ -247,7 +247,7 @@ export default function PortalPage() {
             <div className="brand-titles">
               <h1 className="brand-main-title">{t.brandName}</h1>
               <p className="brand-editor-credit">{t.brandSubtitle}</p>
-              <p className="brand-rni">RNI NO-MAHMAR/2022/85957 | Regd. District Dharashiv</p>
+              <p className="brand-rni">RNI NO-MAHMAR/2022/85957 | मोबा. +91 98902 88228</p>
             </div>
           </div>
         </div>
