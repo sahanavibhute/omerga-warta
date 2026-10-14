@@ -506,12 +506,6 @@ export default function AdminPage() {
           >
             <Sparkles size={18} /> राशी भविष्य अपडेट (Horoscope)
           </button>
-          <button 
-            className={`admin-tab-btn ${adminTab === 'epaper' ? 'active' : ''}`}
-            onClick={() => setAdminTab('epaper')}
-          >
-            <FileText size={18} /> ई-पेपर PDF अपलोड (E-Paper)
-          </button>
         </div>
 
         {/* TAB 1: NEWS */}
@@ -726,95 +720,6 @@ export default function AdminPage() {
                 राशी भविष्य सेव्ह करा
               </button>
             </form>
-          </div>
-        )}
-
-        {/* TAB 3: E-PAPER PDF UPLOAD */}
-        {adminTab === 'epaper' && (
-          <div className="admin-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h3 className="admin-card-title">
-              <FileText size={20} color="#059669" />
-              आजचा डिजिटल ई-पेपर (PDF Management)
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '18px' }}>
-              येथून तुम्ही आजच्या वर्तमानपत्राची PDF फाइल अपलोड किंवा हटवू शकता. अपलोड केलेली PDF मुख्य पृष्ठावरील <strong>"ई-पेपर वाचा (PDF)"</strong> बटणावर वाचकांना थेट वाचता व डाउनलोड करता येईल.
-            </p>
-
-            <div className="form-group">
-              <label>ई-पेपर आवृत्तीचे नाव / शीर्षक</label>
-              <input 
-                type="text" 
-                value={epaperData.title_mr}
-                onChange={(e) => setEpaperData({...epaperData, title_mr: e.target.value})}
-                placeholder="उदा. उमरगा वार्ता - मुख्य आवृत्ती"
-              />
-            </div>
-
-            {/* Hidden Input controlled by buttons */}
-            <input 
-              type="file" 
-              ref={epaperPdfRef}
-              accept="application/pdf"
-              onChange={handleEpaperPdfUpload}
-              style={{ display: 'none' }}
-            />
-
-            {/* Action Buttons: Upload & Delete */}
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px' }}>
-              <button 
-                type="button" 
-                className="btn-primary-action"
-                style={{ background: '#059669', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                onClick={() => epaperPdfRef.current && epaperPdfRef.current.click()}
-              >
-                <Upload size={18} /> नवीन PDF फाइल अपलोड करा (Upload PDF)
-              </button>
-
-              {epaperData.pdfUrl && (
-                <button 
-                  type="button" 
-                  className="btn-primary-action"
-                  style={{ background: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                  onClick={handleDeleteEpaperPdf}
-                >
-                  <Trash2 size={18} /> ई-पेपर PDF हटवा (Delete PDF)
-                </button>
-              )}
-            </div>
-
-            {/* Active Status Display Card */}
-            {epaperData.pdfUrl ? (
-              <div style={{ marginTop: '22px', padding: '16px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  <div>
-                    <span style={{ background: '#059669', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
-                      सक्रिय ई-पेपर (Active)
-                    </span>
-                    <h4 style={{ color: '#065f46', fontSize: '1.1rem', margin: '6px 0 2px' }}>
-                      {epaperData.title_mr}
-                    </h4>
-                    <div style={{ fontSize: '0.85rem', color: '#047857' }}>
-                      फाइल: <strong>{epaperData.fileName}</strong> | तारीख: {epaperData.date}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <a 
-                      href={epaperData.pdfUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="btn-primary-action"
-                      style={{ background: '#0b3c75', padding: '8px 16px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      <Eye size={16} /> PDF उघडा (View PDF)
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ marginTop: '20px', padding: '16px', background: '#fffbeb', borderRadius: '8px', border: '1px dashed #f59e0b', color: '#b45309', fontSize: '0.9rem' }}>
-                सध्या कोणतीही ई-पेपर PDF अपलोड केलेली नाही. <strong>"नवीन PDF फाइल अपलोड करा"</strong> बटणावर क्लिक करून PDF निवडा.
-              </div>
-            )}
           </div>
         )}
       </div>

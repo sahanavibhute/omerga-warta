@@ -85,37 +85,6 @@ export default function PortalPage() {
     });
   }, []);
 
-  // E-Paper State from IndexedDB (Unlimited size & binary support)
-  const [epaperInfo, setEpaperInfo] = useState({
-    title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
-    date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-    pdfUrl: "",
-    fileName: ""
-  });
-
-  useEffect(() => {
-    getEpaperPdf().then(saved => {
-      if (saved && saved.pdfUrl) {
-        setEpaperInfo({
-          title_mr: saved.title_mr,
-          date: saved.date,
-          pdfUrl: saved.pdfUrl,
-          fileName: saved.fileName
-        });
-      }
-    });
-  }, []);
-
-  const handleOpenEpaperPdf = () => {
-    if (epaperInfo && epaperInfo.pdfUrl) {
-      window.open(epaperInfo.pdfUrl, '_blank');
-    } else {
-      alert(lang === 'mr' 
-        ? 'आजचा ई-पेपर लवकरच अपलोड केला जाईल. कृपया थोड्या वेळाने तपासा.' 
-        : "Today's e-paper PDF will be uploaded shortly. Please check back soon.");
-    }
-  };
-
   // Selected Rashi for widget view
   const [selectedRashiId, setSelectedRashiId] = useState(1);
 
@@ -491,23 +460,6 @@ export default function PortalPage() {
                 <Mail size={15} /> mnimbarge@gmail.com
               </a>
             </div>
-          </div>
-
-          {/* E-PAPER WIDGET */}
-          <div className="sidebar-card epaper-banner">
-            <h4 className="epaper-title">{lang === 'mr' ? 'उमरगा वार्ता ई-पेपर' : 'Digital E-Paper'}</h4>
-            <p className="epaper-sub">
-              {epaperInfo.fileName 
-                ? (lang === 'mr' ? `आजची आवृत्ती उपलब्ध: ${epaperInfo.title_mr || 'मुख्य आवृत्ती'} (${epaperInfo.date})` : `Today's Edition: ${epaperInfo.date}`)
-                : (lang === 'mr' ? 'आजची पूर्ण आवृत्ती आणि रविवार विशेष पुरवणी मोफत वाचा.' : 'Read and download today’s complete print edition in digital PDF format.')
-              }
-            </p>
-            <button 
-              className="epaper-download-btn"
-              onClick={handleOpenEpaperPdf}
-            >
-              {lang === 'mr' ? 'ई-पेपर वाचा (PDF)' : 'Read E-Paper (PDF)'}
-            </button>
           </div>
         </aside>
       </main>

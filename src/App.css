@@ -340,9 +340,9 @@
 }
 
 .brand-rni {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #000000 !important;
 }
 
 .bureau-card {
