@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { getEpaperPdf } from './pdfStorage';
 import { fetchNewsFromSupabase } from './supabase';
+import { fetchNewsFromCloud, fetchRashiFromCloud } from './cloudSync';
 import './App.css';
 
 export default function PortalPage() {
@@ -51,28 +52,47 @@ export default function PortalPage() {
     return filtered.length > 0 ? filtered : DEFAULT_NEWS;
   });
 
+  // Fetch real-time news from Cloud (syncs across laptop, phone, tablet)
   useEffect(() => {
-    fetchNewsFromSupabase().then(cloudPosts => {
-      if (cloudPosts && cloudPosts.length > 0) {
-        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        const freshPosts = cloudPosts.filter(item => {
-          if (typeof item.id === 'number' && item.id < 1000) return true;
-          const itemTime = new Date(item.created_at).getTime() || item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-          return itemTime >= oneWeekAgo;
+    fetchNewsFromCloud().then(cloudPosts => {
+      if (cloudPosts && Array.isArray(cloudPosts) && cloudPosts.length > 0) {
+        setNews(cloudPosts);
+        localStorage.setItem('ow_news', JSON.stringify(cloudPosts));
+      } else {
+        // Fallback to Supabase if available
+        fetchNewsFromSupabase().then(supabasePosts => {
+          if (supabasePosts && supabasePosts.length > 0) {
+            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const freshPosts = supabasePosts.filter(item => {
+              if (typeof item.id === 'number' && item.id < 1000) return true;
+              const itemTime = new Date(item.created_at).getTime() || item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
+              return itemTime >= oneWeekAgo;
+            });
+            if (freshPosts.length > 0) {
+              setNews(freshPosts);
+              localStorage.setItem('ow_news', JSON.stringify(freshPosts));
+            }
+          }
         });
-        if (freshPosts.length > 0) {
-          setNews(freshPosts);
-          localStorage.setItem('ow_news', JSON.stringify(freshPosts));
-        }
       }
     });
   }, []);
 
   // Rashi State
-  const [rashiList] = useState(() => {
+  const [rashiList, setRashiList] = useState(() => {
     const saved = localStorage.getItem('ow_rashi');
     return saved ? JSON.parse(saved) : DEFAULT_RASHI;
   });
+
+  // Sync real-time Rashi Bhavishya from Cloud
+  useEffect(() => {
+    fetchRashiFromCloud().then(cloudRashi => {
+      if (cloudRashi && Array.isArray(cloudRashi) && cloudRashi.length > 0) {
+        setRashiList(cloudRashi);
+        localStorage.setItem('ow_rashi', JSON.stringify(cloudRashi));
+      }
+    });
+  }, []);
 
   // E-Paper State from IndexedDB (Unlimited size & binary support)
   const [epaperInfo, setEpaperInfo] = useState({

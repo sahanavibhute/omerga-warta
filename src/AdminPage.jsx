@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { saveEpaperPdf, getEpaperPdf, deleteEpaperPdf } from './pdfStorage';
 import { addNewsToSupabase, updateNewsInSupabase, deleteNewsFromSupabase } from './supabase';
+import { fetchNewsFromCloud, saveNewsToCloud, fetchRashiFromCloud, saveRashiToCloud } from './cloudSync';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -96,14 +97,30 @@ export default function AdminPage() {
     lucky_color_mr: ''
   });
 
-  // Save changes to localStorage so public portal reflects them immediately
+  // Save changes to localStorage and Cloud Storage so all mobile & desktop visitors see updates immediately
   useEffect(() => {
     localStorage.setItem('ow_news', JSON.stringify(news));
+    saveNewsToCloud(news);
   }, [news]);
 
   useEffect(() => {
     localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
+    saveRashiToCloud(rashiList);
   }, [rashiList]);
+
+  // On mount, load existing cloud news & rashi if available
+  useEffect(() => {
+    fetchNewsFromCloud().then(cloudPosts => {
+      if (cloudPosts && Array.isArray(cloudPosts) && cloudPosts.length > 0) {
+        setNews(cloudPosts);
+      }
+    });
+    fetchRashiFromCloud().then(cloudRashi => {
+      if (cloudRashi && Array.isArray(cloudRashi) && cloudRashi.length > 0) {
+        setRashiList(cloudRashi);
+      }
+    });
+  }, []);
 
   // Load existing PDF on component mount
   useEffect(() => {
