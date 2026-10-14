@@ -17,15 +17,29 @@ export const supabase = isSupabaseConfigured
   : null;
 
 /**
- * Fetch latest news articles from Supabase with automatic pagination
- * Limits query to 30 posts to ensure ultra-fast load times even with 50,000+ posts in database.
+ * Fetch latest news articles from Supabase with automatic 7-day cleanup
+ * Automatically purges and filters out posts older than 7 days (1 week).
  */
 export async function fetchNewsFromSupabase(limitCount = 30) {
   if (!supabase) return null;
   try {
+    // 7 days ago timestamp in ISO format
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // 1. Automatically delete old posts older than 7 days from database
+    supabase
+      .from('news_posts')
+      .delete()
+      .lt('created_at', oneWeekAgo)
+      .then(({ error }) => {
+        if (error) console.warn('Old post cleanup note:', error.message);
+      });
+
+    // 2. Query only fresh posts created within the past 7 days
     const { data, error } = await supabase
       .from('news_posts')
       .select('*')
+      .gte('created_at', oneWeekAgo)
       .order('created_at', { ascending: false })
       .limit(limitCount);
 

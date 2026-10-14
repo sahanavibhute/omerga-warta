@@ -35,17 +35,27 @@ export default function PortalPage() {
   // Mobile navigation hamburger toggle state
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  // News State: Initializes with cached/local data, then hydrates from Supabase Cloud
+  // News State: Auto-filters any posts older than 7 days (1 week)
   const [news, setNews] = useState(() => {
     const saved = localStorage.getItem('ow_news');
-    return saved ? JSON.parse(saved) : DEFAULT_NEWS;
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const initial = saved ? JSON.parse(saved) : DEFAULT_NEWS;
+    return initial.filter(item => {
+      const itemTime = item.createdAt || item.id || Date.now();
+      return itemTime >= oneWeekAgo;
+    });
   });
 
   useEffect(() => {
     fetchNewsFromSupabase().then(cloudPosts => {
       if (cloudPosts && cloudPosts.length > 0) {
-        setNews(cloudPosts);
-        localStorage.setItem('ow_news', JSON.stringify(cloudPosts));
+        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const freshPosts = cloudPosts.filter(item => {
+          const itemTime = new Date(item.created_at).getTime() || item.createdAt || item.id || Date.now();
+          return itemTime >= oneWeekAgo;
+        });
+        setNews(freshPosts);
+        localStorage.setItem('ow_news', JSON.stringify(freshPosts));
       }
     });
   }, []);

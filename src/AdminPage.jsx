@@ -41,10 +41,15 @@ export default function AdminPage() {
   const [inputPassword, setInputPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // News State
+  // News State: Auto-filters any posts older than 7 days (1 week)
   const [news, setNews] = useState(() => {
     const saved = localStorage.getItem('ow_news');
-    return saved ? JSON.parse(saved) : DEFAULT_NEWS;
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const initial = saved ? JSON.parse(saved) : DEFAULT_NEWS;
+    return initial.filter(item => {
+      const itemTime = item.createdAt || item.id || Date.now();
+      return itemTime >= oneWeekAgo;
+    });
   });
 
   // Rashi State
@@ -248,8 +253,10 @@ export default function AdminPage() {
       }));
       showToast('बातमी यशस्वीरीत्या अपडेट करण्यात आली!');
     } else {
+      const now = Date.now();
       const newEntry = {
-        id: Date.now(),
+        id: now,
+        createdAt: now,
         title_mr: formNews.title_mr,
         title_en: autoTitleEn,
         category_mr: formNews.category_mr,
