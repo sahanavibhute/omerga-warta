@@ -41,15 +41,12 @@ export default function PortalPage() {
   const [news, setNews] = useState(() => {
     const saved = localStorage.getItem('ow_news');
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const initial = saved ? JSON.parse(saved) : DEFAULT_NEWS;
-    if (!Array.isArray(initial) || initial.length === 0) return DEFAULT_NEWS;
-    const filtered = initial.filter(item => {
-      // If it's a default/sample post with small id or explicitly tagged, preserve it
-      if (typeof item.id === 'number' && item.id < 1000) return true;
+    const initial = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(initial) || initial.length === 0) return [];
+    return initial.filter(item => {
       const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
       return itemTime >= oneWeekAgo;
     });
-    return filtered.length > 0 ? filtered : DEFAULT_NEWS;
   });
 
   // Fetch real-time news from Cloud (syncs across laptop, phone, tablet)
