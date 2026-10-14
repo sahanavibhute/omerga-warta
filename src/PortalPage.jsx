@@ -23,6 +23,7 @@ import {
   FileText
 } from 'lucide-react';
 import { getEpaperPdf } from './pdfStorage';
+import { fetchNewsFromSupabase } from './supabase';
 import './App.css';
 
 export default function PortalPage() {
@@ -34,11 +35,20 @@ export default function PortalPage() {
   // Mobile navigation hamburger toggle state
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  // News State
-  const [news] = useState(() => {
+  // News State: Initializes with cached/local data, then hydrates from Supabase Cloud
+  const [news, setNews] = useState(() => {
     const saved = localStorage.getItem('ow_news');
     return saved ? JSON.parse(saved) : DEFAULT_NEWS;
   });
+
+  useEffect(() => {
+    fetchNewsFromSupabase().then(cloudPosts => {
+      if (cloudPosts && cloudPosts.length > 0) {
+        setNews(cloudPosts);
+        localStorage.setItem('ow_news', JSON.stringify(cloudPosts));
+      }
+    });
+  }, []);
 
   // Rashi State
   const [rashiList] = useState(() => {

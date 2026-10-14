@@ -27,6 +27,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { saveEpaperPdf, getEpaperPdf, deleteEpaperPdf } from './pdfStorage';
+import { addNewsToSupabase, updateNewsInSupabase, deleteNewsFromSupabase } from './supabase';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -220,6 +221,16 @@ export default function AdminPage() {
     const autoCategoryEn = autoTranslateCategory(formNews.category_mr);
 
     if (editingNewsId) {
+      updateNewsInSupabase(editingNewsId, {
+        title_mr: formNews.title_mr,
+        title_en: autoTitleEn,
+        category_mr: formNews.category_mr,
+        category_en: autoCategoryEn,
+        content_mr: formNews.content_mr,
+        content_en: autoContentEn,
+        image: formNews.image || '/logo.jpg'
+      });
+
       setNews(prev => prev.map(item => {
         if (item.id === editingNewsId) {
           return {
@@ -250,6 +261,13 @@ export default function AdminPage() {
         views: 150,
         featured: false
       };
+
+      addNewsToSupabase(newEntry).then(cloudDoc => {
+        if (cloudDoc && cloudDoc.id) {
+          newEntry.id = cloudDoc.id;
+        }
+      });
+
       setNews(prev => [newEntry, ...prev]);
       showToast('नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
     }
@@ -281,6 +299,7 @@ export default function AdminPage() {
 
   const handleDeleteClick = (id) => {
     if (window.confirm('तुम्हाला ही बातमी कायमची काढून टाकायची आहे का?')) {
+      deleteNewsFromSupabase(id);
       setNews(prev => prev.filter(x => x.id !== id));
       showToast('बातमी हटवली आहे.');
     }
