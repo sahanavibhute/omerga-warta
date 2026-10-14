@@ -134,12 +134,29 @@ export default function PortalPage() {
     contactEditor: lang === 'mr' ? 'संपादकांशी संपर्क:' : 'Contact Bureau:'
   };
 
-  const currentDateStr = new Date().toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
+  // Dynamic Live Date that updates regularly
+  const [currentDateStr, setCurrentDateStr] = useState(() => {
+    return new Date().toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   });
+
+  useEffect(() => {
+    const updateDate = () => {
+      setCurrentDateStr(new Date().toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-US', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }));
+    };
+    updateDate();
+    const interval = setInterval(updateDate, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [lang]);
 
   const activeRashi = rashiList.find(r => r.id === selectedRashiId) || rashiList[0];
 
@@ -411,10 +428,15 @@ export default function PortalPage() {
               <div className="active-rashi-card">
                 <div className="active-rashi-head">
                   <div className="rashi-big-icon">{activeRashi.symbol}</div>
-                  <div>
-                    <h4 className="active-rashi-name">
-                      {lang === 'mr' ? `${activeRashi.name_mr} रास (${activeRashi.name_en})` : `${activeRashi.name_en} (${activeRashi.name_mr})`}
-                    </h4>
+                  <div style={{ flexGrow: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                      <h4 className="active-rashi-name">
+                        {lang === 'mr' ? `${activeRashi.name_mr} रास (${activeRashi.name_en})` : `${activeRashi.name_en} (${activeRashi.name_mr})`}
+                      </h4>
+                      <span className="rashi-date-badge">
+                        <Calendar size={11} /> {activeRashi.updated_date || currentDateStr}
+                      </span>
+                    </div>
                     <div className="active-rashi-stats">
                       <span>{t.rulingPlanet}: <strong>{lang === 'mr' ? activeRashi.planet_mr : activeRashi.planet_en}</strong></span>
                       <span>•</span>

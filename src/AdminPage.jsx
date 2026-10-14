@@ -220,10 +220,10 @@ export default function AdminPage() {
       return;
     }
 
-    const todayDate = new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-    const autoTitleEn = autoTranslateMarathiToEnglish(formNews.title_mr);
-    const autoContentEn = autoTranslateMarathiToEnglish(formNews.content_mr);
-    const autoCategoryEn = autoTranslateCategory(formNews.category_mr);
+    const nowObj = new Date();
+    const todayDate = nowObj.toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const postTime = nowObj.toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const formattedPostDateTime = `${todayDate} • ${postTime}`;
 
     if (editingNewsId) {
       updateNewsInSupabase(editingNewsId, {
@@ -264,7 +264,7 @@ export default function AdminPage() {
         content_mr: formNews.content_mr,
         content_en: autoContentEn,
         image: formNews.image || '/logo.jpg',
-        date: todayDate,
+        date: formattedPostDateTime,
         views: 150,
         featured: false
       };
@@ -312,11 +312,17 @@ export default function AdminPage() {
     }
   };
 
-  // Save Rashi
+  // Save Rashi with Today's Date Stamp (Replaces previous day's horoscope cleanly)
   const handleSaveRashi = (e) => {
     e.preventDefault();
     const autoPredEn = autoTranslateMarathiToEnglish(formRashi.prediction_mr);
     const autoColorEn = autoTranslateColor(formRashi.lucky_color_mr);
+    const todayFormatted = new Date().toLocaleDateString('mr-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
 
     setRashiList(prev => prev.map(r => {
       if (r.id === selectedAdminRashiId) {
@@ -325,12 +331,14 @@ export default function AdminPage() {
           prediction_mr: formRashi.prediction_mr,
           prediction_en: autoPredEn,
           lucky_color_mr: formRashi.lucky_color_mr,
-          lucky_color_en: autoColorEn
+          lucky_color_en: autoColorEn,
+          updated_date: todayFormatted,
+          updated_at: Date.now()
         };
       }
       return r;
     }));
-    showToast('राशी भविष्य अपडेट झाले!');
+    showToast('आजचे राशी भविष्य अपडेट झाले!');
   };
 
   // ================= STRICT AUTH GUARD =================
