@@ -1608,8 +1608,8 @@
   background: #b91c1c;
 }
 
-/* Responsive Media Queries */
-@media (max-width: 850px) {
+/* Responsive Media Queries (Mobile & Tablet) */
+@media (max-width: 1024px) {
   /* Navbar Mobile Hamburger & Drawer */
   .mobile-menu-toggle {
     display: flex;
