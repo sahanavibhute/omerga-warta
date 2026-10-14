@@ -22,8 +22,11 @@ import {
   Upload,
   LogOut,
   FileText,
+  Eye,
+  AlertTriangle,
   Image as ImageIcon
 } from 'lucide-react';
+import { saveEpaperPdf, getEpaperPdf, deleteEpaperPdf } from './pdfStorage';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -93,34 +96,60 @@ export default function AdminPage() {
     localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
   }, [rashiList]);
 
+  // Load existing PDF on component mount
   useEffect(() => {
-    localStorage.setItem('ow_epaper', JSON.stringify(epaperData));
-  }, [epaperData]);
+    getEpaperPdf().then(saved => {
+      if (saved) {
+        setEpaperData({
+          title_mr: saved.title_mr || "उमरगा वार्ता - आजची मुख्य आवृत्ती",
+          date: saved.date,
+          pdfUrl: saved.pdfUrl,
+          fileName: saved.fileName
+        });
+      }
+    });
+  }, []);
 
-  // E-Paper PDF Upload Handler
-  const handleEpaperPdfUpload = (e) => {
+  // E-Paper PDF Upload Handler with IndexedDB
+  const handleEpaperPdfUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      if (file.type !== 'application/pdf') {
+      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
         alert('कृपया फक्त PDF फाइल निवडा (Only PDF files allowed).');
         return;
       }
-      if (file.size > 20 * 1024 * 1024) {
-        alert('कृपया 20MB पेक्षा लहान PDF निवडा.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEpaperData(prev => ({
-          ...prev,
-          pdfUrl: reader.result,
-          fileName: file.name,
+      try {
+        const item = await saveEpaperPdf(file, {
+          title_mr: epaperData.title_mr,
           date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-        }));
-        showToast('ई-पेपर PDF यशस्वीरीत्या अपलोड झाली!');
-      };
-      reader.readAsDataURL(file);
+        });
+        const objectUrl = URL.createObjectURL(file);
+        setEpaperData({
+          title_mr: item.title_mr,
+          date: item.date,
+          pdfUrl: objectUrl,
+          fileName: item.fileName
+        });
+        showToast('ई-पेपर PDF यशस्वीरीत्या सेव्ह व प्रकाशित झाली!');
+      } catch (err) {
+        console.error(err);
+        alert('PDF सेव्ह करताना एरर आली. कृपया पुन्हा प्रयत्न करा.');
+      }
+    }
+  };
+
+  // Delete E-Paper PDF Handler
+  const handleDeleteEpaperPdf = async () => {
+    if (window.confirm('तुम्हाला सध्याचा ई-पेपर कायमचा हटवायचा आहे का? (Confirm delete e-paper PDF?)')) {
+      await deleteEpaperPdf();
+      setEpaperData({
+        title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
+        date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        pdfUrl: "",
+        fileName: ""
+      });
+      if (epaperPdfRef.current) epaperPdfRef.current.value = '';
+      showToast('ई-पेपर यशस्वीरीत्या हटवण्यात आला!');
     }
   };
 
@@ -606,10 +635,10 @@ export default function AdminPage() {
           <div className="admin-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <h3 className="admin-card-title">
               <FileText size={20} color="#059669" />
-              आजचा डिजिटल ई-पेपर (PDF Upload)
+              आजचा डिजिटल ई-पेपर (PDF Management)
             </h3>
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '18px' }}>
-              येथून तुम्ही आजच्या वर्तमानपत्राची PDF फाइल अपलोड करू शकता. अपलोड केल्यावर मुख्य पृष्ठावरील <strong>"ई-पेपर वाचा (PDF)"</strong> बटणावर क्लिक करून वाचक थेट ही PDF वाचू व डाउनलोड करू शकतील.
+              येथून तुम्ही आजच्या वर्तमानपत्राची PDF फाइल अपलोड किंवा हटवू शकता. अपलोड केलेली PDF मुख्य पृष्ठावरील <strong>"ई-पेपर वाचा (PDF)"</strong> बटणावर वाचकांना थेट वाचता व डाउनलोड करता येईल.
             </p>
 
             <div className="form-group">
@@ -622,51 +651,69 @@ export default function AdminPage() {
               />
             </div>
 
-            <div className="form-group" style={{ marginTop: '16px' }}>
-              <label>ई-पेपर PDF फाइल (Device मधून निवडा) *</label>
-              <div 
-                className="device-upload-dropzone"
-                style={{ borderColor: '#86efac', background: '#f0fdf4' }}
+            {/* Hidden Input controlled by buttons */}
+            <input 
+              type="file" 
+              ref={epaperPdfRef}
+              accept="application/pdf"
+              onChange={handleEpaperPdfUpload}
+              style={{ display: 'none' }}
+            />
+
+            {/* Action Buttons: Upload & Delete */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px' }}>
+              <button 
+                type="button" 
+                className="btn-primary-action"
+                style={{ background: '#059669', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 onClick={() => epaperPdfRef.current && epaperPdfRef.current.click()}
               >
-                <input 
-                  type="file" 
-                  ref={epaperPdfRef}
-                  accept="application/pdf"
-                  onChange={handleEpaperPdfUpload}
-                  style={{ display: 'none' }}
-                />
-                <div className="device-empty-upload">
-                  <FileText size={42} color="#059669" />
-                  <p style={{ fontWeight: 700, margin: '8px 0 2px', fontSize: '1rem', color: '#065f46' }}>
-                    {epaperData.fileName ? `निवडलेली फाइल: ${epaperData.fileName}` : 'मोबाईल किंवा कॉम्प्युटरमधून PDF फाइल निवडा'}
-                  </p>
-                  <small style={{ color: '#059669' }}>
-                    {epaperData.pdfUrl ? '✓ PDF यशस्वीरीत्या जोडलेली आहे (फाइल बदलण्यासाठी पुन्हा क्लिक करा)' : 'फक्त .PDF फाइल (कमाल 20MB)'}
-                  </small>
-                </div>
-              </div>
+                <Upload size={18} /> नवीन PDF फाइल अपलोड करा (Upload PDF)
+              </button>
+
+              {epaperData.pdfUrl && (
+                <button 
+                  type="button" 
+                  className="btn-primary-action"
+                  style={{ background: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  onClick={handleDeleteEpaperPdf}
+                >
+                  <Trash2 size={18} /> ई-पेपर PDF हटवा (Delete PDF)
+                </button>
+              )}
             </div>
 
-            {epaperData.pdfUrl && (
-              <div style={{ marginTop: '20px', padding: '14px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Active Status Display Card */}
+            {epaperData.pdfUrl ? (
+              <div style={{ marginTop: '22px', padding: '16px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
-                    <strong style={{ color: '#065f46' }}>सध्याचा सक्रिय ई-पेपर:</strong>
+                    <span style={{ background: '#059669', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
+                      सक्रिय ई-पेपर (Active)
+                    </span>
+                    <h4 style={{ color: '#065f46', fontSize: '1.1rem', margin: '6px 0 2px' }}>
+                      {epaperData.title_mr}
+                    </h4>
                     <div style={{ fontSize: '0.85rem', color: '#047857' }}>
-                      {epaperData.title_mr} | तारीख: {epaperData.date} ({epaperData.fileName || 'Active PDF'})
+                      फाइल: <strong>{epaperData.fileName}</strong> | तारीख: {epaperData.date}
                     </div>
                   </div>
-                  <a 
-                    href={epaperData.pdfUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="btn-primary-action"
-                    style={{ background: '#059669', padding: '8px 16px', fontSize: '0.85rem' }}
-                  >
-                    PDF तपासा (Preview)
-                  </a>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a 
+                      href={epaperData.pdfUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="btn-primary-action"
+                      style={{ background: '#0b3c75', padding: '8px 16px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Eye size={16} /> PDF उघडा (View PDF)
+                    </a>
+                  </div>
                 </div>
+              </div>
+            ) : (
+              <div style={{ marginTop: '20px', padding: '16px', background: '#fffbeb', borderRadius: '8px', border: '1px dashed #f59e0b', color: '#b45309', fontSize: '0.9rem' }}>
+                सध्या कोणतीही ई-पेपर PDF अपलोड केलेली नाही. <strong>"नवीन PDF फाइल अपलोड करा"</strong> बटणावर क्लिक करून PDF निवडा.
               </div>
             )}
           </div>

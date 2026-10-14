@@ -16,11 +16,13 @@ import {
   X, 
   Mail, 
   UserCheck, 
-  TrendingUp,
-  Search,
-  Lock,
-  Menu
+  TrendingUp, 
+  Search, 
+  Lock, 
+  Menu,
+  FileText
 } from 'lucide-react';
+import { getEpaperPdf } from './pdfStorage';
 import './App.css';
 
 export default function PortalPage() {
@@ -44,16 +46,26 @@ export default function PortalPage() {
     return saved ? JSON.parse(saved) : DEFAULT_RASHI;
   });
 
-  // E-Paper State from LocalStorage
-  const [epaperInfo] = useState(() => {
-    const saved = localStorage.getItem('ow_epaper');
-    return saved ? JSON.parse(saved) : {
-      title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
-      date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-      pdfUrl: "",
-      fileName: ""
-    };
+  // E-Paper State from IndexedDB (Unlimited size & binary support)
+  const [epaperInfo, setEpaperInfo] = useState({
+    title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
+    date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+    pdfUrl: "",
+    fileName: ""
   });
+
+  useEffect(() => {
+    getEpaperPdf().then(saved => {
+      if (saved && saved.pdfUrl) {
+        setEpaperInfo({
+          title_mr: saved.title_mr,
+          date: saved.date,
+          pdfUrl: saved.pdfUrl,
+          fileName: saved.fileName
+        });
+      }
+    });
+  }, []);
 
   const handleOpenEpaperPdf = () => {
     if (epaperInfo && epaperInfo.pdfUrl) {
