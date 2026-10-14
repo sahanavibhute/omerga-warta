@@ -99,7 +99,7 @@ export default function AdminPage() {
 
   // Save changes to localStorage and Cloud Storage so all mobile & desktop visitors see updates immediately
   useEffect(() => {
-    localStorage.setItem('ow_news', JSON.stringify(news));
+    localStorage.setItem('ow_news_v2', JSON.stringify(news));
     saveNewsToCloud(news);
   }, [news]);
 

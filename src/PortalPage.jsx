@@ -39,11 +39,14 @@ export default function PortalPage() {
 
   // News State: Auto-filters any posts older than 7 days (1 week)
   const [news, setNews] = useState(() => {
-    const saved = localStorage.getItem('ow_news');
+    // Purge legacy mock data cache if present
+    const saved = localStorage.getItem('ow_news_v2');
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const initial = saved ? JSON.parse(saved) : [];
     if (!Array.isArray(initial) || initial.length === 0) return [];
     return initial.filter(item => {
+      // Discard any old mock items (id <= 4)
+      if (typeof item.id === 'number' && item.id < 1000) return false;
       const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
       return itemTime >= oneWeekAgo;
     });
@@ -51,26 +54,17 @@ export default function PortalPage() {
 
   // Fetch real-time news from Cloud (syncs across laptop, phone, tablet)
   useEffect(() => {
+    // Clear legacy cache on first load of new version
+    if (localStorage.getItem('ow_news')) {
+      localStorage.removeItem('ow_news');
+    }
+
     fetchNewsFromCloud().then(cloudPosts => {
-      if (cloudPosts && Array.isArray(cloudPosts) && cloudPosts.length > 0) {
-        setNews(cloudPosts);
-        localStorage.setItem('ow_news', JSON.stringify(cloudPosts));
-      } else {
-        // Fallback to Supabase if available
-        fetchNewsFromSupabase().then(supabasePosts => {
-          if (supabasePosts && supabasePosts.length > 0) {
-            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            const freshPosts = supabasePosts.filter(item => {
-              if (typeof item.id === 'number' && item.id < 1000) return true;
-              const itemTime = new Date(item.created_at).getTime() || item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-              return itemTime >= oneWeekAgo;
-            });
-            if (freshPosts.length > 0) {
-              setNews(freshPosts);
-              localStorage.setItem('ow_news', JSON.stringify(freshPosts));
-            }
-          }
-        });
+      if (cloudPosts && Array.isArray(cloudPosts)) {
+        // Discard any legacy mock items with low id
+        const cleanPosts = cloudPosts.filter(item => !(typeof item.id === 'number' && item.id < 1000));
+        setNews(cleanPosts);
+        localStorage.setItem('ow_news_v2', JSON.stringify(cleanPosts));
       }
     });
   }, []);
