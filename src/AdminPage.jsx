@@ -29,6 +29,7 @@ import {
 import { saveEpaperPdf, getEpaperPdf, deleteEpaperPdf } from './pdfStorage';
 import { addNewsToSupabase, updateNewsInSupabase, deleteNewsFromSupabase } from './supabase';
 import { fetchNewsFromCloud, saveNewsToCloud, fetchRashiFromCloud, saveRashiToCloud } from './cloudSync';
+import { uploadImageToCloudCDN, compressBase64 } from './imageUpload';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -89,6 +90,7 @@ export default function AdminPage() {
     author: 'महेश निंबरगे'
   });
   const [imagePreview, setImagePreview] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Rashi Form Fields
   const [selectedAdminRashiId, setSelectedAdminRashiId] = useState(1);
@@ -215,29 +217,62 @@ export default function AdminPage() {
     navigate('/');
   };
 
-  // Image Upload Handler
-  const handleImageFileUpload = (e) => {
+  // Image Upload Handler: Reads file, provides instant preview, compresses and uploads to Cloud CDN
+  const handleImageFileUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('कृपया 5MB पेक्षा लहान फोटो निवडा.');
+      if (file.size > 8 * 1024 * 1024) {
+        alert('कृपया 8MB पेक्षा लहान फोटो निवडा.');
         return;
       }
+      setIsUploadingImage(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setFormNews(prev => ({ ...prev, image: reader.result }));
+      reader.onloadend = async () => {
+        const rawBase64 = reader.result;
+        setImagePreview(rawBase64);
+        try {
+          // 1. Client-side compress first
+          const compressed = await compressBase64(rawBase64, 900, 0.75);
+          setFormNews(prev => ({ ...prev, image: compressed }));
+
+          // 2. Upload to Cloud CDN for universal URL access
+          const cloudUrl = await uploadImageToCloudCDN(compressed);
+          if (cloudUrl && cloudUrl.startsWith('http')) {
+            setImagePreview(cloudUrl);
+            setFormNews(prev => ({ ...prev, image: cloudUrl }));
+          }
+        } catch (err) {
+          console.warn('Image CDN upload warning:', err);
+        } finally {
+          setIsUploadingImage(false);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
   // Save News
-  const handleSaveNews = (e) => {
+  const handleSaveNews = async (e) => {
     e.preventDefault();
     if (!formNews.title_mr.trim() || !formNews.content_mr.trim()) {
       alert('कृपया मराठी बातमीचे शीर्षक व मजकूर आवश्यक भरा.');
       return;
+    }
+
+    let finalImageUrl = formNews.image || '/logo.jpg';
+
+    // If image is still a large base64 string, upload or compress it before saving
+    if (finalImageUrl.startsWith('data:')) {
+      try {
+        const cdnUrl = await uploadImageToCloudCDN(finalImageUrl);
+        if (cdnUrl && cdnUrl.startsWith('http')) {
+          finalImageUrl = cdnUrl;
+        } else {
+          finalImageUrl = await compressBase64(finalImageUrl, 800, 0.6);
+        }
+      } catch (e) {
+        console.warn('Final image upload attempt note:', e);
+      }
     }
 
     const nowObj = new Date();
@@ -257,7 +292,7 @@ export default function AdminPage() {
         category_en: autoCategoryEn,
         content_mr: formNews.content_mr,
         content_en: autoContentEn,
-        image: formNews.image || '/logo.jpg'
+        image: finalImageUrl
       });
 
       setNews(prev => prev.map(item => {
@@ -270,7 +305,7 @@ export default function AdminPage() {
             category_en: autoCategoryEn,
             content_mr: formNews.content_mr,
             content_en: autoContentEn,
-            image: formNews.image || item.image || '/logo.jpg'
+            image: finalImageUrl
           };
         }
         return item;
@@ -287,7 +322,7 @@ export default function AdminPage() {
         category_en: autoCategoryEn,
         content_mr: formNews.content_mr,
         content_en: autoContentEn,
-        image: formNews.image || '/logo.jpg',
+        image: finalImageUrl,
         date: formattedPostDateTime,
         views: 150,
         featured: false
@@ -532,14 +567,16 @@ export default function AdminPage() {
                       <div className="device-preview-box">
                         <img src={imagePreview} alt="Preview" className="device-img-preview" />
                         <div className="device-reselect-tag">
-                          <Upload size={14} /> दुसरा फोटो निवडा (Change Image)
+                          {isUploadingImage ? 'फोटो क्लाउडवर अपलोड होत आहे...' : '✓ फोटो निवडला (दुसरा निवडण्यासाठी क्लिक करा)'}
                         </div>
                       </div>
                     ) : (
                       <div className="device-empty-upload">
                         <Upload size={30} color="#0b3c75" />
-                        <p style={{ fontWeight: 700, margin: '6px 0 2px' }}>गॅलरी / कॉम्प्युटरमधून फोटो निवडा</p>
-                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 5MB)</small>
+                        <p style={{ fontWeight: 700, margin: '6px 0 2px' }}>
+                          {isUploadingImage ? 'फोटो प्रक्रिया सुरू आहे...' : 'गॅलरी / कॉम्प्युटरमधून फोटो निवडा'}
+                        </p>
+                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 8MB - आपोआप ऑप्टिमाइझ केला जाईल)</small>
                       </div>
                     )}
                   </div>
