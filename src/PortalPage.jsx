@@ -15,6 +15,7 @@ import {
   Sparkles, 
   X, 
   Mail, 
+  Phone,
   UserCheck, 
   TrendingUp, 
   Search, 
@@ -464,9 +465,14 @@ export default function PortalPage() {
                 : "'Omerga Warta' stands committed to transparent, fearless journalism for Omerga and the entire Dharashiv district."
               }
             </p>
-            <a href="mailto:mnimbarge@gmail.com" className="editor-contact-btn">
-              <Mail size={16} /> mnimbarge@gmail.com
-            </a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+              <a href="tel:+919890288228" className="editor-contact-btn" style={{ background: '#16a34a' }}>
+                <Phone size={15} /> +91 98902 88228
+              </a>
+              <a href="mailto:mnimbarge@gmail.com" className="editor-contact-btn">
+                <Mail size={15} /> mnimbarge@gmail.com
+              </a>
+            </div>
           </div>
 
           {/* E-PAPER WIDGET */}
@@ -567,8 +573,13 @@ export default function PortalPage() {
             <p className="footer-text">
               मुख्य कार्यालय: उमरगा वार्ता, मुख्य रोड, उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
             </p>
-            <div className="footer-quick-badge">
-              <Mail size={15} /> <a href="mailto:mnimbarge@gmail.com" style={{ color: 'inherit' }}>mnimbarge@gmail.com</a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+              <div className="footer-quick-badge">
+                <Phone size={15} /> <a href="tel:+919890288228" style={{ color: 'inherit' }}>+91 98902 88228</a>
+              </div>
+              <div className="footer-quick-badge">
+                <Mail size={15} /> <a href="mailto:mnimbarge@gmail.com" style={{ color: 'inherit' }}>mnimbarge@gmail.com</a>
+              </div>
             </div>
           </div>
         </div>
