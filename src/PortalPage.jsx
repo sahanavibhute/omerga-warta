@@ -568,7 +568,7 @@ export default function PortalPage() {
           <div className="footer-contact-col">
             <h4 className="footer-heading">{lang === 'mr' ? 'कार्यालय व संपर्क' : 'Bureau Office'}</h4>
             <p className="footer-text">
-              <strong>{lang === 'mr' ? 'डिजिटल डेस्क:' : 'Digital Desk:'}</strong> {lang === 'mr' ? 'उमरगा व धाराशिव न्यूज नेटवर्क' : 'Omerga & Dharashiv News Network'}
+              <strong>{lang === 'mr' ? 'डिजिटल डेस्क:' : 'Digital Desk:'}</strong> {lang === 'mr' ? 'उमरगा वार्ता' : 'Omerga Warta'}
             </p>
             <p className="footer-text">
               मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
