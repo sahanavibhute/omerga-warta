@@ -382,7 +382,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  overflow-x: auto;
+  position: relative;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-admin-drawer-link {
+  display: none;
 }
 
 .nav-links {
@@ -1478,29 +1493,143 @@
 }
 
 /* Responsive Media Queries */
-@media (max-width: 950px) {
+@media (max-width: 850px) {
+  /* Navbar Mobile Hamburger & Drawer */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #a31515;
+    flex-direction: column;
+    display: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    border-top: 1px solid rgba(255,255,255,0.15);
+    z-index: 100;
+  }
+
+  .nav-links.mobile-open {
+    display: flex;
+    animation: fadeInDown 0.25s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .nav-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 1.05rem;
+  }
+
+  .mobile-admin-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: rgba(0,0,0,0.2);
+    color: #fef08a;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .nav-search-bar {
+    min-width: 140px;
+    padding: 4px 8px;
+    margin-right: 4px;
+  }
+  
+  .nav-search-bar input {
+    font-size: 0.78rem;
+  }
+
+  /* Grid Layouts */
   .portal-layout {
     grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 16px;
   }
+
   .admin-grid-layout {
     grid-template-columns: 1fr;
   }
+
   .footer-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
+
   .hero-img-wrap {
-    height: 250px;
+    height: 220px;
   }
+
+  .hero-title {
+    font-size: 1.35rem;
+  }
+
+  .hero-snippet {
+    font-size: 0.95rem;
+  }
+
   .brand-header-grid {
     flex-direction: column;
     text-align: center;
+    gap: 12px;
   }
+
   .brand-identity {
     flex-direction: column;
+    text-align: center;
   }
+
+  .brand-main-title {
+    font-size: 1.85rem;
+  }
+
+  .brand-logo-img {
+    height: 70px;
+  }
+
   .bureau-card {
     flex-direction: column;
     width: 100%;
     align-items: center;
+    padding: 10px;
+  }
+
+  .top-meta-content {
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .meta-left {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .rashi-icons-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .news-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-card {
+    padding: 16px;
+  }
+
+  .modal-container {
+    padding: 20px 16px;
   }
 }
+

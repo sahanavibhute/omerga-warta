@@ -18,7 +18,8 @@ import {
   UserCheck, 
   TrendingUp,
   Search,
-  Lock
+  Lock,
+  Menu
 } from 'lucide-react';
 import './App.css';
 
@@ -27,6 +28,9 @@ export default function PortalPage() {
 
   // Language State: 'mr' (Marathi) or 'en' (English)
   const [lang, setLang] = useState(() => localStorage.getItem('ow_lang') || 'mr');
+
+  // Mobile navigation hamburger toggle state
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // News State
   const [news] = useState(() => {
@@ -171,14 +175,38 @@ export default function PortalPage() {
       {/* NAVBAR */}
       <nav className="site-navbar">
         <div className="container nav-container">
-          <div className="nav-links">
-            <a href="#main-news" className="nav-item active">{lang === 'mr' ? 'मुख्य बातमी' : 'Top News'}</a>
-            <a href="#rashi" className="nav-item">{lang === 'mr' ? 'राशी भविष्य' : 'Horoscope'}</a>
-            <a href="#local" className="nav-item">{lang === 'mr' ? 'उमरगा शहर' : 'Omerga City'}</a>
-            <a href="#dharashiv" className="nav-item">{lang === 'mr' ? 'धाराशिव जिल्हा' : 'Dharashiv'}</a>
-            <a href="#agri" className="nav-item">{lang === 'mr' ? 'बाजारभाव व शेती' : 'Agriculture'}</a>
+          {/* Mobile Hamburger Toggle Button */}
+          <button 
+            className="mobile-menu-toggle" 
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isMobileNavOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          {/* Desktop Navigation Links */}
+          <div className={`nav-links ${isMobileNavOpen ? 'mobile-open' : ''}`}>
+            <a href="#main-news" className="nav-item active" onClick={() => setIsMobileNavOpen(false)}>
+              {lang === 'mr' ? 'मुख्य बातमी' : 'Top News'}
+            </a>
+            <a href="#rashi" className="nav-item" onClick={() => setIsMobileNavOpen(false)}>
+              {lang === 'mr' ? 'राशी भविष्य' : 'Horoscope'}
+            </a>
+            <a href="#local" className="nav-item" onClick={() => setIsMobileNavOpen(false)}>
+              {lang === 'mr' ? 'उमरगा शहर' : 'Omerga City'}
+            </a>
+            <a href="#dharashiv" className="nav-item" onClick={() => setIsMobileNavOpen(false)}>
+              {lang === 'mr' ? 'धाराशिव जिल्हा' : 'Dharashiv'}
+            </a>
+            <a href="#agri" className="nav-item" onClick={() => setIsMobileNavOpen(false)}>
+              {lang === 'mr' ? 'बाजारभाव व शेती' : 'Agriculture'}
+            </a>
+            <div className="mobile-admin-drawer-link" onClick={() => { setIsMobileNavOpen(false); navigate('/admin'); }}>
+              <Lock size={15} /> <span>{t.adminLogin}</span>
+            </div>
           </div>
 
+          {/* Search Bar */}
           <div className="nav-search-bar">
             <Search size={16} color="#94a3b8" />
             <input 
