@@ -571,7 +571,7 @@ export default function PortalPage() {
               <strong>{lang === 'mr' ? 'डिजिटल डेस्क:' : 'Digital Desk:'}</strong> {lang === 'mr' ? 'उमरगा व धाराशिव न्यूज नेटवर्क' : 'Omerga & Dharashiv News Network'}
             </p>
             <p className="footer-text">
-              मुख्य कार्यालय: उमरगा वार्ता, मुख्य रोड, उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
+              मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
               <div className="footer-quick-badge">
