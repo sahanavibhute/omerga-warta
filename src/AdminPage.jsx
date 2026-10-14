@@ -450,61 +450,44 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* List */}
+            {/* Published Stories List */}
             <div className="admin-card">
               <h3 className="admin-card-title">
                 प्रकाशित बातम्या ({news.length})
               </h3>
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>फोटो</th>
-                      <th>शीर्षक</th>
-                      <th>विभाग</th>
-                      <th>कृती</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {news.map(item => (
-                      <tr key={item.id}>
-                        <td>
-                          <img 
-                            src={item.image || '/logo.jpg'} 
-                            alt="thumb" 
-                            className="admin-table-thumb"
-                            onError={(e) => { e.target.src = '/logo.jpg'; }}
-                          />
-                        </td>
-                        <td>
-                          <div className="admin-table-title">{item.title_mr}</div>
-                          <div className="admin-table-sub">{item.title_en || '-'}</div>
-                        </td>
-                        <td>
-                          <span className="table-badge">{item.category_mr}</span>
-                        </td>
-                        <td>
-                          <div className="table-btns">
-                            <button 
-                              className="action-btn-edit" 
-                              onClick={() => handleEditClick(item)}
-                              title="Edit"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                            <button 
-                              className="action-btn-del" 
-                              onClick={() => handleDeleteClick(item.id)}
-                              title="Delete"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="admin-stories-list">
+                {news.map(item => (
+                  <div key={item.id} className="admin-story-card">
+                    <img 
+                      src={item.image || '/logo.jpg'} 
+                      alt="thumb" 
+                      className="admin-story-img"
+                      onError={(e) => { e.target.src = '/logo.jpg'; }}
+                    />
+                    <div className="admin-story-content">
+                      <div className="admin-story-top">
+                        <span className="table-badge">{item.category_mr}</span>
+                        <span className="admin-story-date">{item.date || 'आज'}</span>
+                      </div>
+                      <h4 className="admin-story-title">{item.title_mr}</h4>
+                      <p className="admin-story-sub">{item.title_en || ''}</p>
+                      <div className="admin-story-actions">
+                        <button 
+                          className="btn-admin-edit" 
+                          onClick={() => handleEditClick(item)}
+                        >
+                          <Edit3 size={15} /> बातमी एडिट करा
+                        </button>
+                        <button 
+                          className="btn-admin-del" 
+                          onClick={() => handleDeleteClick(item.id)}
+                        >
+                          <Trash2 size={15} /> डिलीट करा
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

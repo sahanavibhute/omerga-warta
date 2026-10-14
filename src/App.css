@@ -1506,6 +1506,108 @@
   color: #64748b;
 }
 
+/* Admin Story Cards (Clean & 100% Mobile Responsive) */
+.admin-stories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-story-card {
+  display: flex;
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.15s;
+}
+
+.admin-story-card:hover {
+  background: #f1f5f9;
+}
+
+.admin-story-img {
+  width: 120px;
+  min-height: 100px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.admin-story-content {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.admin-story-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.admin-story-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-story-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.admin-story-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.admin-story-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.btn-admin-edit {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn-admin-edit:hover {
+  background: #1d4ed8;
+}
+
+.btn-admin-del {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.btn-admin-del:hover {
+  background: #b91c1c;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 850px) {
   /* Navbar Mobile Hamburger & Drawer */
@@ -1717,9 +1819,24 @@
     gap: 4px;
   }
 
-  .table-btns button {
+  /* Admin Story Card Mobile Adaptation */
+  .admin-story-card {
+    flex-direction: column;
+  }
+
+  .admin-story-img {
     width: 100%;
-    padding: 6px;
+    height: 140px;
+  }
+
+  .admin-story-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .admin-story-actions button {
+    flex: 1;
+    justify-content: center;
   }
 }
 
