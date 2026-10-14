@@ -647,7 +647,7 @@ export default function PortalPage() {
         </a>
 
         <a 
-          href="https://youtube.com" 
+          href="https://www.youtube.com/@murum7171" 
           target="_blank" 
           rel="noopener noreferrer" 
           className="hanging-social-btn hanging-youtube"
