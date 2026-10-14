@@ -9,6 +9,7 @@ export const DEFAULT_NEWS = [
     content_mr: "उमरगा शहर आणि ग्रामीण भागातील वाहतूक कोंडी सोडवण्यासाठी राष्ट्रीय महामार्ग विस्तार प्रकल्पाचे काम युद्धपातळीवर सुरू झाले आहे. या प्रकल्पामुळे परिसरातील व्यापार आणि उद्योग जगताला मोठा फायदा होणार आहे. प्रशासनाने कामाची गुणवत्ता राखण्याचे सक्त आदेश दिले आहेत. उमरगा वार्ता प्रतिनिधीने घेतलेल्या प्रत्यक्ष पाहणीत काम वेगाने सुरू असल्याचे दिसून आले असून नागरिकांनी प्रशासनाचे आभार मानले आहेत.",
     content_en: "Work on the national highway expansion project to resolve traffic congestion in Omerga city and surrounding rural areas has accelerated. This project will significantly boost local trade, industry, and daily commuting. The administration has issued strict guidelines ensuring high construction quality. On-ground reporting by Omerga Warta confirms active progress.",
     date: "14 ऑक्टोबर 2026",
+    createdAt: Date.now(),
     author: "महेश निंबरगे",
     featured: true,
     views: 1420
@@ -23,6 +24,7 @@ export const DEFAULT_NEWS = [
     content_mr: "जिल्हा नियोजन समितीच्या विशेष बैठकीत उमरगा, लोहारा आणि परिसरातील जलसंधारण, शाळांची दुरुस्ती व प्राथमिक आरोग्य उपकेंद्रांसाठी कोट्यवधी रुपयांचा निधी मंजूर करण्यात आला आहे. यामुळे ग्रामीण भागातील पायाभूत सुविधा मजबूत होणार असल्याचे स्पष्ट करण्यात आले.",
     content_en: "In a dedicated meeting of the District Planning Committee, substantial funds have been sanctioned for water conservation, school infrastructure renovation, and primary healthcare sub-centers across Omerga and Dharashiv region.",
     date: "13 ऑक्टोबर 2026",
+    createdAt: Date.now() - 3600000 * 12,
     author: "जिल्हा प्रतिनिधी",
     featured: false,
     views: 980
@@ -37,6 +39,7 @@ export const DEFAULT_NEWS = [
     content_mr: "चालू खरीप हंगामात उमरगा बाजार समितीत शेतकऱ्यांच्या सोयाबीनची मोठी आवक होत आहे. पारदर्शक वजन काटा आणि तत्पर चुकारा यामुळे परिसरातील शेतकरी समाधान व्यक्त करत आहेत. बाजार समिती प्रशासनाने शेतकऱ्यांना सर्व आवश्यक सुविधा पुरवल्या आहेत.",
     content_en: "The current harvest season at Omerga APMC has witnessed tremendous arrivals of soybean and pulses. Transparent weighment and immediate settlement have earned positive reactions from regional farmers.",
     date: "12 ऑक्टोबर 2026",
+    createdAt: Date.now() - 3600000 * 24,
     author: "कृषी वार्ता प्रतिनिधी",
     featured: false,
     views: 840
@@ -51,6 +54,7 @@ export const DEFAULT_NEWS = [
     content_mr: "स्थानिक अभियांत्रिकी महाविद्यालयाच्या विद्यार्थ्यांनी तयार केलेल्या सौरऊर्जेवरील कृषी ड्रोन प्रकल्पाला राष्ट्रीय पातळीवर प्रथम पारितोषिक मिळाले आहे. प्राचार्य व शिक्षकांनी विद्यार्थ्यांचे विशेष अभिनंदन करून त्यांच्या भविष्यातील वाटचालीस शुभेच्छा दिल्या.",
     content_en: "A solar-assisted agricultural drone prototype built by students of the local engineering institute has won first place in a prestigious national innovation competition.",
     date: "11 ऑक्टोबर 2026",
+    createdAt: Date.now() - 3600000 * 48,
     author: "शिक्षण प्रतिनिधी",
     featured: false,
     views: 650

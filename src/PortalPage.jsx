@@ -41,10 +41,14 @@ export default function PortalPage() {
     const saved = localStorage.getItem('ow_news');
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const initial = saved ? JSON.parse(saved) : DEFAULT_NEWS;
-    return initial.filter(item => {
-      const itemTime = item.createdAt || item.id || Date.now();
+    if (!Array.isArray(initial) || initial.length === 0) return DEFAULT_NEWS;
+    const filtered = initial.filter(item => {
+      // If it's a default/sample post with small id or explicitly tagged, preserve it
+      if (typeof item.id === 'number' && item.id < 1000) return true;
+      const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
       return itemTime >= oneWeekAgo;
     });
+    return filtered.length > 0 ? filtered : DEFAULT_NEWS;
   });
 
   useEffect(() => {
@@ -52,11 +56,14 @@ export default function PortalPage() {
       if (cloudPosts && cloudPosts.length > 0) {
         const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         const freshPosts = cloudPosts.filter(item => {
-          const itemTime = new Date(item.created_at).getTime() || item.createdAt || item.id || Date.now();
+          if (typeof item.id === 'number' && item.id < 1000) return true;
+          const itemTime = new Date(item.created_at).getTime() || item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
           return itemTime >= oneWeekAgo;
         });
-        setNews(freshPosts);
-        localStorage.setItem('ow_news', JSON.stringify(freshPosts));
+        if (freshPosts.length > 0) {
+          setNews(freshPosts);
+          localStorage.setItem('ow_news', JSON.stringify(freshPosts));
+        }
       }
     });
   }, []);
