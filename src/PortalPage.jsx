@@ -493,7 +493,7 @@ export default function PortalPage() {
               मुख्य कार्यालय: उमरगा वार्ता, मुख्य रोड, उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
             </p>
             <div className="footer-quick-badge">
-              <Mail size={15} /> <a href="mailto:mnimbarge@gmail.com" style="color:inherit;">mnimbarge@gmail.com</a>
+              <Mail size={15} /> <a href="mailto:mnimbarge@gmail.com" style={{ color: 'inherit' }}>mnimbarge@gmail.com</a>
             </div>
           </div>
         </div>
