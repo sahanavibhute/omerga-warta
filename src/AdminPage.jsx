@@ -332,7 +332,10 @@ export default function AdminPage() {
         }
       });
 
-      setNews(prev => [newEntry, ...prev]);
+      const updatedNewsList = [newEntry, ...news];
+      setNews(updatedNewsList);
+      localStorage.setItem('ow_news_v2', JSON.stringify(updatedNewsList));
+      saveNewsToCloud(updatedNewsList);
       showToast('नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
     }
 
@@ -364,7 +367,10 @@ export default function AdminPage() {
   const handleDeleteClick = (id) => {
     if (window.confirm('तुम्हाला ही बातमी कायमची काढून टाकायची आहे का?')) {
       deleteNewsFromSupabase(id);
-      setNews(prev => prev.filter(x => x.id !== id));
+      const remaining = news.filter(x => x.id !== id);
+      setNews(remaining);
+      localStorage.setItem('ow_news_v2', JSON.stringify(remaining));
+      saveNewsToCloud(remaining);
       showToast('बातमी हटवली आहे.');
     }
   };
