@@ -1,11 +1,11 @@
 // Cloud Real-Time Storage Sync for Omerga Warta (उमरगा वार्ता)
-// Syncs news, rashibhavishya, and e-paper metadata universally across all devices (Mobile, Desktop, Laptop)
-// without requiring any manual database setup or API keys.
+// Backed by ExtendsClass Cloud Storage (Bin: edbeaff)
+// Seamlessly syncs articles, photos, and horoscope across all phones, tablets, and laptops.
 
-const KVDB_BUCKET = 'AD2mUcAFDXGAQdaKZsixjX';
-const KVDB_BASE_URL = `https://kvdb.io/${KVDB_BUCKET}`;
+const STORAGE_BIN_ID = 'edbeaff';
+const STORAGE_API_URL = `https://extendsclass.com/api/json-storage/bin/${STORAGE_BIN_ID}`;
 
-// One week in milliseconds for auto-purging old posts
+// One week in milliseconds for automatic 7-day purging of old posts
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
@@ -15,7 +15,7 @@ export function filterOlderThanOneWeek(items) {
   if (!Array.isArray(items)) return [];
   const cutoff = Date.now() - ONE_WEEK_MS;
   return items.filter(item => {
-    // Keep sample/default placeholder items with small id if present
+    // Keep sample/default placeholder items with small id
     if (typeof item.id === 'number' && item.id < 1000) return true;
     const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
     return itemTime >= cutoff;
@@ -27,20 +27,17 @@ export function filterOlderThanOneWeek(items) {
  */
 export async function fetchNewsFromCloud() {
   try {
-    const res = await fetch(`${KVDB_BASE_URL}/ow_news?t=${Date.now()}`, {
+    const res = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
       headers: { 'Cache-Control': 'no-cache' }
     });
-    if (res.status === 404) {
-      return null;
-    }
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data)) {
-        return filterOlderThanOneWeek(data);
+      if (data && Array.isArray(data.news)) {
+        return filterOlderThanOneWeek(data.news);
       }
     }
   } catch (err) {
-    console.warn('Cloud news fetch warning:', err);
+    console.warn('Cloud news fetch note:', err);
   }
   return null;
 }
@@ -51,12 +48,23 @@ export async function fetchNewsFromCloud() {
 export async function saveNewsToCloud(newsList) {
   try {
     const freshNews = filterOlderThanOneWeek(newsList);
-    await fetch(`${KVDB_BASE_URL}/ow_news`, {
-      method: 'POST',
-      body: JSON.stringify(freshNews),
+    // Fetch existing bin content first so we preserve rashi
+    let existingData = { news: [], rashi: [] };
+    try {
+      const getRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`);
+      if (getRes.ok) {
+        existingData = await getRes.json();
+      }
+    } catch (e) {}
+
+    existingData.news = freshNews;
+
+    const res = await fetch(STORAGE_API_URL, {
+      method: 'PUT',
+      body: JSON.stringify(existingData),
       headers: { 'Content-Type': 'application/json' }
     });
-    return true;
+    return res.ok;
   } catch (err) {
     console.error('Cloud news save error:', err);
     return false;
@@ -68,17 +76,17 @@ export async function saveNewsToCloud(newsList) {
  */
 export async function fetchRashiFromCloud() {
   try {
-    const res = await fetch(`${KVDB_BASE_URL}/ow_rashi?t=${Date.now()}`, {
+    const res = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
       headers: { 'Cache-Control': 'no-cache' }
     });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
+      if (data && Array.isArray(data.rashi) && data.rashi.length > 0) {
+        return data.rashi;
       }
     }
   } catch (err) {
-    console.warn('Cloud rashi fetch warning:', err);
+    console.warn('Cloud rashi fetch note:', err);
   }
   return null;
 }
@@ -88,48 +96,24 @@ export async function fetchRashiFromCloud() {
  */
 export async function saveRashiToCloud(rashiList) {
   try {
-    await fetch(`${KVDB_BASE_URL}/ow_rashi`, {
-      method: 'POST',
-      body: JSON.stringify(rashiList),
+    let existingData = { news: [], rashi: [] };
+    try {
+      const getRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`);
+      if (getRes.ok) {
+        existingData = await getRes.json();
+      }
+    } catch (e) {}
+
+    existingData.rashi = rashiList;
+
+    const res = await fetch(STORAGE_API_URL, {
+      method: 'PUT',
+      body: JSON.stringify(existingData),
       headers: { 'Content-Type': 'application/json' }
     });
-    return true;
+    return res.ok;
   } catch (err) {
     console.error('Cloud rashi save error:', err);
-    return false;
-  }
-}
-
-/**
- * Fetch E-Paper metadata from Cloud Storage
- */
-export async function fetchEpaperMetaFromCloud() {
-  try {
-    const res = await fetch(`${KVDB_BASE_URL}/ow_epaper_meta?t=${Date.now()}`, {
-      headers: { 'Cache-Control': 'no-cache' }
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    console.warn('Cloud epaper fetch warning:', err);
-  }
-  return null;
-}
-
-/**
- * Save E-Paper metadata to Cloud Storage
- */
-export async function saveEpaperMetaToCloud(meta) {
-  try {
-    await fetch(`${KVDB_BASE_URL}/ow_epaper_meta`, {
-      method: 'POST',
-      body: JSON.stringify(meta),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return true;
-  } catch (err) {
-    console.error('Cloud epaper save error:', err);
     return false;
   }
 }
