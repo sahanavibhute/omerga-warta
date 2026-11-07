@@ -38,6 +38,15 @@ export default function PortalPage() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // News State: Auto-filters any posts older than 7 days (1 week)
+  const [isLoadingNews, setIsLoadingNews] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ow_news_v2');
+      return !saved || JSON.parse(saved).length === 0;
+    } catch (e) {
+      return true;
+    }
+  });
+
   const [news, setNews] = useState(() => {
     try {
       const saved = localStorage.getItem('ow_news_v2');
@@ -65,6 +74,7 @@ export default function PortalPage() {
     } catch (e) {}
 
     fetchNewsFromCloud().then(cloudPosts => {
+      setIsLoadingNews(false);
       if (cloudPosts && Array.isArray(cloudPosts)) {
         const cleanPosts = cloudPosts.filter(item => item && !(typeof item.id === 'number' && item.id < 1000));
         setNews(cleanPosts);
@@ -72,6 +82,8 @@ export default function PortalPage() {
           localStorage.setItem('ow_news_v2', JSON.stringify(cleanPosts));
         } catch (e) {}
       }
+    }).catch(() => {
+      setIsLoadingNews(false);
     });
   }, []);
 
@@ -364,7 +376,12 @@ export default function PortalPage() {
             </div>
           </div>
 
-          {filteredNews.length === 0 ? (
+          {isLoadingNews && filteredNews.length === 0 ? (
+            <div className="empty-state-card" style={{ padding: '30px', textAlign: 'center' }}>
+              <div style={{ display: 'inline-block', width: '28px', height: '28px', border: '3px solid #e2e8f0', borderTopColor: '#b91c1c', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '10px' }} />
+              <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>{lang === 'mr' ? 'बातम्या लोड होत आहेत...' : 'Loading news...'}</p>
+            </div>
+          ) : filteredNews.length === 0 ? (
             <div className="empty-state-card">
               <p>{lang === 'mr' ? 'कोणतीही बातमी उपलब्ध नाही.' : 'No news found matching your criteria.'}</p>
             </div>
