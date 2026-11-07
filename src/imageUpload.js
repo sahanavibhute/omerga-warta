@@ -1,13 +1,13 @@
 /**
- * Robust Multi-Tier Cloud Image Uploader
+ * Robust Cloud Image Uploader
  * 
- * Supports:
- * - Direct mobile camera & gallery selection (JPG, JPEG, PNG, WEBP)
- * - File validation (< 10MB) & Canvas compression (< 800KB)
- * - TIER 1: Server-side Cloudinary upload via /api/upload-image (secure, no client secrets)
- * - TIER 2: Unsigned Cloudinary direct client upload (if VITE_CLOUDINARY_UPLOAD_PRESET is configured)
- * - TIER 3: Catbox High-Availability Global File CDN (generates permanent public HTTPS URL e.g. https://files.catbox.moe/...)
- * - TIER 4: High-efficiency client-compressed data fallback
+ * Flow:
+ * 1. Validates file format (JPG, JPEG, PNG, WEBP) & size (< 10MB)
+ * 2. Compresses & resizes on canvas for fast mobile upload (< 1200px)
+ * 3. Sends to serverless endpoint /api/upload-image which uploads to:
+ *    - Cloudinary (if credentials configured in Vercel)
+ *    - Catbox Global Cloud File CDN (high-availability HTTPS server fallback)
+ * 4. Returns guaranteed HTTPS permanent image URL (never a local base64 or blob URL)
  */
 
 /**
@@ -40,9 +40,9 @@ export function validateImageFile(file) {
 
 /**
  * High-performance client-side image compression and resizing.
- * Shrinks 10MB camera shots into high-detail ~150KB - 300KB images.
+ * Shrinks 10MB camera shots into high-detail ~150KB - 250KB JPEG for fast transfer.
  */
-export function compressImageFile(fileOrDataUrl, maxDimension = 1200, quality = 0.82) {
+export function compressImageFile(fileOrDataUrl, maxDimension = 1200, quality = 0.8) {
   return new Promise((resolve, reject) => {
     if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.startsWith('data:')) {
       const img = new Image();
@@ -117,13 +117,12 @@ export function compressImageFile(fileOrDataUrl, maxDimension = 1200, quality = 
 }
 
 /**
- * Uploads an image with automatic multi-tier cloud fallbacks.
- * Guaranteed to return a valid HTTPS image URL or optimized fallback.
+ * Uploads an image to the cloud and returns a permanent HTTPS URL.
  */
 export async function uploadImageToCloud(imageInput, onProgress) {
   if (!imageInput) return null;
 
-  // If already a permanent web URL, keep it
+  // If already a permanent web URL, keep it directly
   if (typeof imageInput === 'string' && imageInput.startsWith('http')) {
     return imageInput;
   }
@@ -134,9 +133,9 @@ export async function uploadImageToCloud(imageInput, onProgress) {
     base64Data = await compressImageFile(imageInput);
   }
 
-  if (onProgress) onProgress('क्लाउडवर फोटो सुरक्षित केला जात आहे...');
+  if (onProgress) onProgress('क्लाउड सर्व्हरवर फोटो सुरक्षित केला जात आहे...');
 
-  // ================= TIER 1: Serverless Cloudinary Endpoint =================
+  // 1. Primary: Serverless upload route (supports Cloudinary and server-side CDN fallback)
   try {
     const res = await fetch('/api/upload-image', {
       method: 'POST',
@@ -147,15 +146,15 @@ export async function uploadImageToCloud(imageInput, onProgress) {
     if (res.ok) {
       const data = await res.json();
       if (data && data.url) {
-        if (onProgress) onProgress('✓ Cloudinary वर कायमस्वरूपी सेव्ह!');
+        if (onProgress) onProgress('✓ फोटो क्लाउडवर यशस्वीरीत्या सेव्ह झाला!');
         return data.url;
       }
     }
   } catch (err) {
-    console.warn('Serverless Cloudinary upload attempt notice:', err);
+    console.warn('Serverless image upload note:', err);
   }
 
-  // ================= TIER 2: Direct Client Cloudinary (if preset is configured) =================
+  // 2. Direct Cloudinary Client (if upload preset configured in frontend)
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -173,47 +172,14 @@ export async function uploadImageToCloud(imageInput, onProgress) {
       if (res.ok) {
         const data = await res.json();
         if (data && data.secure_url) {
-          if (onProgress) onProgress('✓ Cloudinary थेट अपलोड यशस्वी!');
+          if (onProgress) onProgress('✓ Cloudinary वर सेव्ह झाला!');
           return data.secure_url;
         }
       }
     } catch (err) {
-      console.warn('Cloudinary direct upload note:', err);
+      console.warn('Cloudinary direct client upload note:', err);
     }
   }
 
-  // ================= TIER 3: Catbox Global Public File Storage CDN =================
-  try {
-    const base64Clean = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
-    const byteCharacters = atob(base64Clean);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-    const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('fileToUpload', blob, `ow_${Date.now()}.jpg`);
-
-    const res = await fetch('https://catbox.moe/user/api.php', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (res.ok) {
-      const returnedUrl = await res.text();
-      if (returnedUrl && returnedUrl.startsWith('https://files.catbox.moe/')) {
-        if (onProgress) onProgress('✓ कायमस्वरूपी क्लाउड CDN वर सेव्ह केले!');
-        return returnedUrl.trim();
-      }
-    }
-  } catch (err) {
-    console.warn('Catbox CDN upload note:', err);
-  }
-
-  // ================= TIER 4: Compact WebP/JPEG Data URI =================
-  if (onProgress) onProgress('✓ फोटो सुरक्षितपणे जोडला');
-  return base64Data;
+  throw new Error('फोटो क्लाउडवर सेव्ह करता आला नाही. कृपया इंटरनेट तपासा.');
 }
