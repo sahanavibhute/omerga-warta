@@ -3,7 +3,7 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '12mb'
+      sizeLimit: '15mb'
     }
   }
 };
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Image data is required' });
     }
 
-    // 1. Primary: Cloudinary if environment variables are provided
+    // 1. Primary: Cloudinary (If environment variables are added to Vercel)
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -61,19 +61,41 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. High-Efficiency Built-in CDN Delivery:
-    // If external third-party CDN is blocked or unconfigured, return the clean optimized data URI
-    // It embeds directly into the cloud database entry and displays instantly on all phones and computers
+    // 2. High-Performance Dedicated Cloud Storage for this specific image:
+    // Creates a dedicated permanent cloud bin for this photo
+    // This allows the main news bin to store only lightweight URLs without hitting the 100KB limit
+    try {
+      const createBinRes = await fetch('https://extendsclass.com/api/json-storage/bin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image })
+      });
+
+      if (createBinRes.ok) {
+        const binJson = await createBinRes.json();
+        if (binJson && binJson.id) {
+          const directUrl = `https://extendsclass.com/api/json-storage/bin/${binJson.id}`;
+          return res.status(200).json({
+            success: true,
+            url: directUrl,
+            provider: 'cloud-storage-bin'
+          });
+        }
+      }
+    } catch (binErr) {
+      console.warn('Dedicated bin creation error:', binErr.message);
+    }
+
+    // 3. Fallback: Return optimized image
     return res.status(200).json({
       success: true,
       url: image,
-      provider: 'direct-storage',
-      note: 'To use Cloudinary, set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel settings.'
+      provider: 'fallback-direct'
     });
   } catch (error) {
-    console.error('Serverless Upload Error:', error);
+    console.error('Upload handler error:', error);
     return res.status(500).json({
-      error: error.message || 'Image upload failed'
+      error: error.message || 'Upload failed'
     });
   }
 }

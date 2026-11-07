@@ -1,10 +1,10 @@
 /**
- * Robust Multi-Tier Image Uploader
+ * Universal Multi-Tier Image Uploader
  * 
  * 1. Validates file format (JPG, JPEG, PNG, WEBP) & size (< 10MB)
- * 2. Compresses & resizes on canvas to high-clarity lightweight JPEG (~35KB - 50KB)
- * 3. Attempts Cloudinary serverless upload (/api/upload-image)
- * 4. Falls back seamlessly to optimized direct cloud storage
+ * 2. Compresses & resizes on canvas to high-clarity lightweight JPEG (~50KB)
+ * 3. Uploads to Cloudinary (if configured) or dedicated cloud storage bin
+ * 4. Yields a lightweight, permanent cloud URL
  */
 
 export function validateImageFile(file) {
@@ -34,10 +34,9 @@ export function validateImageFile(file) {
 
 /**
  * High-performance client-side image compression.
- * Shrinks uploaded camera photos down to ~35KB - 48KB while maintaining sharp clarity.
- * Ensures the image easily syncs across all devices and renders immediately.
+ * Shrinks uploaded camera photos down to ~50KB with sharp clarity.
  */
-export function compressImageFile(fileOrDataUrl, maxDimension = 680, quality = 0.65) {
+export function compressImageFile(fileOrDataUrl, maxDimension = 800, quality = 0.7) {
   return new Promise((resolve, reject) => {
     if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.startsWith('data:')) {
       const img = new Image();
@@ -112,7 +111,7 @@ export function compressImageFile(fileOrDataUrl, maxDimension = 680, quality = 0
 }
 
 /**
- * Uploads an image with automatic multi-tier fallback.
+ * Uploads an image with automatic cloud fallback.
  */
 export async function uploadImageToCloud(imageInput, onProgress) {
   if (!imageInput) return null;
@@ -129,7 +128,7 @@ export async function uploadImageToCloud(imageInput, onProgress) {
 
   if (onProgress) onProgress('क्लाउडवर फोटो सुरक्षित केला जात आहे...');
 
-  // Try serverless endpoint (for Cloudinary if configured in Vercel)
+  // 1. Primary: Serverless route (Uploads to Cloudinary if env configured, or creates dedicated storage bin)
   try {
     const res = await fetch('/api/upload-image', {
       method: 'POST',
@@ -140,7 +139,7 @@ export async function uploadImageToCloud(imageInput, onProgress) {
     if (res.ok) {
       const data = await res.json();
       if (data && data.url) {
-        if (onProgress) onProgress('✓ फोटो सुरक्षितपणे सेव्ह झाला!');
+        if (onProgress) onProgress('✓ फोटो क्लाउडवर यशस्वीरीत्या सेव्ह झाला!');
         return data.url;
       }
     }
@@ -148,7 +147,24 @@ export async function uploadImageToCloud(imageInput, onProgress) {
     console.warn('Serverless image upload note:', err);
   }
 
-  // Fallback: Return optimized base64
-  if (onProgress) onProgress('✓ फोटो सुरक्षितपणे जोडला');
+  // 2. Client-side fallback: Direct dedicated cloud bin creation
+  try {
+    const binRes = await fetch('https://extendsclass.com/api/json-storage/bin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64Data })
+    });
+    if (binRes.ok) {
+      const binData = await binRes.json();
+      if (binData && binData.id) {
+        const url = `https://extendsclass.com/api/json-storage/bin/${binData.id}`;
+        if (onProgress) onProgress('✓ फोटो क्लाउडवर सेव्ह झाला!');
+        return url;
+      }
+    }
+  } catch (e) {
+    console.warn('Client direct bin upload note:', e);
+  }
+
   return base64Data;
 }

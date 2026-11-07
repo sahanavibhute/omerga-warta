@@ -39,6 +39,7 @@ import {
   saveAdsToCloud
 } from './cloudSync';
 import { validateImageFile, uploadImageToCloud } from './imageUpload';
+import CloudImage from './CloudImage';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -671,11 +672,10 @@ export default function AdminPage() {
               <div className="admin-stories-list">
                 {news.map(item => (
                   <div key={item.id} className="admin-story-card">
-                    <img 
-                      src={item.image || '/logo.jpg'} 
+                    <CloudImage 
+                      src={item.image} 
                       alt="thumb" 
                       className="admin-story-img"
-                      onError={(e) => { e.target.src = '/logo.jpg'; }}
                     />
                     <div className="admin-story-content">
                       <div className="admin-story-top">

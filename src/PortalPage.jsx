@@ -23,6 +23,7 @@ import {
   Lock, 
   Menu
 } from 'lucide-react';
+import CloudImage from './CloudImage';
 import { fetchNewsFromSupabase } from './supabase';
 import { fetchNewsFromCloud, fetchRashiFromCloud, fetchAdsFromCloud } from './cloudSync';
 import './App.css';
@@ -372,10 +373,9 @@ export default function PortalPage() {
               {filteredNews[0] && (
                 <article className="lead-hero-story" onClick={() => setActiveStory(filteredNews[0])}>
                   <div className="hero-img-wrap">
-                    <img 
-                      src={filteredNews[0].image || '/logo.jpg'} 
+                    <CloudImage 
+                      src={filteredNews[0].image} 
                       alt={filteredNews[0].title_mr || 'News'} 
-                      onError={(e) => { e.target.src = '/logo.jpg'; }}
                     />
                     <span className="hero-tag">
                       {lang === 'mr' ? (filteredNews[0].category_mr || 'उमरगा विशेष') : (filteredNews[0].category_en || filteredNews[0].category_mr || 'News')}
@@ -419,10 +419,9 @@ export default function PortalPage() {
                       onClick={() => setActiveStory(story)}
                     >
                       <div className="card-thumb-wrap">
-                        <img 
-                          src={story.image || '/logo.jpg'} 
+                        <CloudImage 
+                          src={story.image} 
                           alt={displayTitle || 'News'} 
-                          onError={(e) => { e.target.src = '/logo.jpg'; }}
                         />
                         <span className="card-cat-badge">{displayCat}</span>
                       </div>
@@ -572,11 +571,10 @@ export default function PortalPage() {
             </div>
 
             {activeStory.image && (
-              <img 
+              <CloudImage 
                 src={activeStory.image} 
                 alt="Story" 
                 className="modal-banner-img"
-                onError={(e) => { e.target.src = '/logo.jpg'; }}
               />
             )}
 
