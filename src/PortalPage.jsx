@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   DEFAULT_NEWS, 
-  DEFAULT_RASHI 
+  DEFAULT_RASHI,
+  DEFAULT_ADS
 } from './mockData';
 import { 
   Globe, 
@@ -23,7 +24,7 @@ import {
   Menu
 } from 'lucide-react';
 import { fetchNewsFromSupabase } from './supabase';
-import { fetchNewsFromCloud, fetchRashiFromCloud } from './cloudSync';
+import { fetchNewsFromCloud, fetchRashiFromCloud, fetchAdsFromCloud } from './cloudSync';
 import './App.css';
 
 export default function PortalPage() {
@@ -103,6 +104,27 @@ export default function PortalPage() {
     });
   }, []);
 
+  // Ads State
+  const [adsConfig, setAdsConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ow_ads');
+      return saved ? JSON.parse(saved) : DEFAULT_ADS;
+    } catch (e) {
+      return DEFAULT_ADS;
+    }
+  });
+
+  useEffect(() => {
+    fetchAdsFromCloud().then(cloudAds => {
+      if (cloudAds) {
+        setAdsConfig(cloudAds);
+        try {
+          localStorage.setItem('ow_ads', JSON.stringify(cloudAds));
+        } catch (e) {}
+      }
+    });
+  }, []);
+
   // Selected Rashi for widget view
   const [selectedRashiId, setSelectedRashiId] = useState(1);
 
@@ -160,7 +182,7 @@ export default function PortalPage() {
       }));
     };
     updateDate();
-    const interval = setInterval(updateDate, 60000); // Check every minute
+    const interval = setInterval(updateDate, 60000);
     return () => clearInterval(interval);
   }, [lang]);
 
@@ -168,7 +190,10 @@ export default function PortalPage() {
     || (Array.isArray(rashiList) && rashiList[0]) 
     || DEFAULT_RASHI[0];
 
-  const filteredNews = news.filter(item => {
+  // Filter out any draft articles from the public view
+  const publishedNews = news.filter(item => item && item.status !== 'draft');
+
+  const filteredNews = publishedNews.filter(item => {
     if (!item) return false;
     const title = (lang === 'mr' ? item.title_mr : (item.title_en || item.title_mr)) || '';
     const category = item.category_mr || '';
@@ -177,8 +202,8 @@ export default function PortalPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const breakingHeadline = (news.length > 0 && news[0])
-    ? ((lang === 'mr' ? news[0].title_mr : (news[0].title_en || news[0].title_mr)) || 'उमरगा वार्ता')
+  const breakingHeadline = (publishedNews.length > 0 && publishedNews[0])
+    ? ((lang === 'mr' ? publishedNews[0].title_mr : (publishedNews[0].title_en || publishedNews[0].title_mr)) || 'उमरगा वार्ता')
     : (lang === 'mr' ? 'उमरगा वार्ता डिजिटल पोर्टलवर आपले स्वागत आहे.' : 'Welcome to Omerga Warta News Portal.');
 
   const handleShareWhatsApp = (story) => {
@@ -207,7 +232,7 @@ export default function PortalPage() {
               <span>{lang === 'mr' ? 'English मध्ये वाचा' : 'मराठी आवृत्ती'}</span>
             </button>
 
-            {/* Hidden / Disguised Link to the Separate /admin route */}
+            {/* Link to the Separate /admin route */}
             <button className="admin-nav-btn" onClick={() => navigate('/admin')} title="Staff Login">
               <Lock size={13} />
               <span>{t.adminLogin}</span>
@@ -294,6 +319,25 @@ export default function PortalPage() {
           </div>
         </div>
       </div>
+
+      {/* HEADER BANNER ADVERTISEMENT */}
+      {adsConfig?.headerBanner?.enabled && adsConfig.headerBanner.imageUrl && (
+        <div className="container" style={{ margin: '12px auto' }}>
+          <a 
+            href={adsConfig.headerBanner.linkUrl || '#'} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ display: 'block', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          >
+            <img 
+              src={adsConfig.headerBanner.imageUrl} 
+              alt={adsConfig.headerBanner.altText || 'Advertisement'} 
+              style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </a>
+        </div>
+      )}
 
       {/* MAIN CONTENT GRID */}
       <main className="container portal-layout">
@@ -405,8 +449,27 @@ export default function PortalPage() {
           )}
         </section>
 
-        {/* RIGHT COLUMN: RASHI BHAVISHYA */}
+        {/* RIGHT COLUMN: RASHI BHAVISHYA & SIDEBAR ADS */}
         <aside className="sidebar-column">
+          {/* SIDEBAR BANNER AD */}
+          {adsConfig?.sidebarBanner?.enabled && adsConfig.sidebarBanner.imageUrl && (
+            <div className="sidebar-card" style={{ padding: '8px', overflow: 'hidden' }}>
+              <a 
+                href={adsConfig.sidebarBanner.linkUrl || '#'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ display: 'block', borderRadius: '8px', overflow: 'hidden' }}
+              >
+                <img 
+                  src={adsConfig.sidebarBanner.imageUrl} 
+                  alt={adsConfig.sidebarBanner.altText || 'Advertisement'} 
+                  style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '6px' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </a>
+            </div>
+          )}
+
           <div className="rashi-glass-box" id="rashi">
             <div className="rashi-widget-header">
               <div>

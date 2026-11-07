@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   DEFAULT_NEWS, 
-  DEFAULT_RASHI 
+  DEFAULT_RASHI,
+  DEFAULT_ADS
 } from './mockData';
 import { 
   autoTranslateMarathiToEnglish, 
@@ -21,15 +22,23 @@ import {
   CheckCircle, 
   Upload,
   LogOut,
-  FileText,
+  Megaphone,
   Eye,
   AlertTriangle,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Check,
+  FileCheck
 } from 'lucide-react';
-import { saveEpaperPdf, getEpaperPdf, deleteEpaperPdf } from './pdfStorage';
 import { addNewsToSupabase, updateNewsInSupabase, deleteNewsFromSupabase } from './supabase';
-import { fetchNewsFromCloud, saveNewsToCloud, fetchRashiFromCloud, saveRashiToCloud } from './cloudSync';
-import { uploadImageToCloudCDN, compressBase64 } from './imageUpload';
+import { 
+  fetchNewsFromCloud, 
+  saveNewsToCloud, 
+  fetchRashiFromCloud, 
+  saveRashiToCloud,
+  fetchAdsFromCloud,
+  saveAdsToCloud
+} from './cloudSync';
+import { validateImageFile, uploadImageToCloud } from './imageUpload';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -45,39 +54,51 @@ export default function AdminPage() {
 
   // News State: Auto-filters any posts older than 7 days (1 week)
   const [news, setNews] = useState(() => {
-    const saved = localStorage.getItem('ow_news');
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const initial = saved ? JSON.parse(saved) : [];
-    if (!Array.isArray(initial) || initial.length === 0) return [];
-    return initial.filter(item => {
-      const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-      return itemTime >= oneWeekAgo;
-    });
+    try {
+      const saved = localStorage.getItem('ow_news_v2');
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const initial = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(initial) || initial.length === 0) return [];
+      return initial.filter(item => {
+        if (!item) return false;
+        if (typeof item.id === 'number' && item.id < 1000) return false;
+        const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
+        return itemTime >= oneWeekAgo;
+      });
+    } catch (e) {
+      return [];
+    }
   });
 
   // Rashi State
   const [rashiList, setRashiList] = useState(() => {
-    const saved = localStorage.getItem('ow_rashi');
-    return saved ? JSON.parse(saved) : DEFAULT_RASHI;
+    try {
+      const saved = localStorage.getItem('ow_rashi');
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      return DEFAULT_RASHI;
+    } catch (e) {
+      return DEFAULT_RASHI;
+    }
   });
 
-  // E-Paper PDF State
-  const [epaperData, setEpaperData] = useState(() => {
-    const saved = localStorage.getItem('ow_epaper');
-    return saved ? JSON.parse(saved) : {
-      title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
-      date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-      pdfUrl: "",
-      fileName: ""
-    };
+  // Ads Configuration State
+  const [adsConfig, setAdsConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ow_ads');
+      return saved ? JSON.parse(saved) : DEFAULT_ADS;
+    } catch (e) {
+      return DEFAULT_ADS;
+    }
   });
 
-  // Admin Tab: 'news', 'rashi', or 'epaper'
+  // Admin Tab: 'news', 'rashi', 'ads'
   const [adminTab, setAdminTab] = useState('news');
   const [editingNewsId, setEditingNewsId] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const fileInputRef = useRef(null);
-  const epaperPdfRef = useRef(null);
+  const adHeaderInputRef = useRef(null);
+  const adSidebarInputRef = useRef(null);
 
   // News Form Fields
   const [formNews, setFormNews] = useState({
@@ -85,9 +106,11 @@ export default function AdminPage() {
     category_mr: 'उमरगा विशेष',
     image: '',
     content_mr: '',
-    author: 'महेश निंबरगे'
+    author: 'महेश निंबरगे',
+    status: 'published' // 'published' or 'draft'
   });
   const [imagePreview, setImagePreview] = useState('');
+  const [uploadStatus, setUploadStatus] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Rashi Form Fields
@@ -97,18 +120,29 @@ export default function AdminPage() {
     lucky_color_mr: ''
   });
 
-  // Save changes to localStorage and Cloud Storage so all mobile & desktop visitors see updates immediately
+  // Save changes to localStorage and Cloud Storage so all devices see updates
   useEffect(() => {
-    localStorage.setItem('ow_news_v2', JSON.stringify(news));
+    try {
+      localStorage.setItem('ow_news_v2', JSON.stringify(news));
+    } catch (e) {}
     saveNewsToCloud(news);
   }, [news]);
 
   useEffect(() => {
-    localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
+    try {
+      localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
+    } catch (e) {}
     saveRashiToCloud(rashiList);
   }, [rashiList]);
 
-  // On mount, load existing cloud news & rashi if available
+  useEffect(() => {
+    try {
+      localStorage.setItem('ow_ads', JSON.stringify(adsConfig));
+    } catch (e) {}
+    saveAdsToCloud(adsConfig);
+  }, [adsConfig]);
+
+  // On mount, load existing cloud news, rashi & ads if available
   useEffect(() => {
     fetchNewsFromCloud().then(cloudPosts => {
       if (cloudPosts && Array.isArray(cloudPosts) && cloudPosts.length > 0) {
@@ -120,68 +154,16 @@ export default function AdminPage() {
         setRashiList(cloudRashi);
       }
     });
-  }, []);
-
-  // Load existing PDF on component mount
-  useEffect(() => {
-    getEpaperPdf().then(saved => {
-      if (saved) {
-        setEpaperData({
-          title_mr: saved.title_mr || "उमरगा वार्ता - आजची मुख्य आवृत्ती",
-          date: saved.date,
-          pdfUrl: saved.pdfUrl,
-          fileName: saved.fileName
-        });
+    fetchAdsFromCloud().then(cloudAds => {
+      if (cloudAds) {
+        setAdsConfig(cloudAds);
       }
     });
   }, []);
 
-  // E-Paper PDF Upload Handler with IndexedDB
-  const handleEpaperPdfUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        alert('कृपया फक्त PDF फाइल निवडा (Only PDF files allowed).');
-        return;
-      }
-      try {
-        const item = await saveEpaperPdf(file, {
-          title_mr: epaperData.title_mr,
-          date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-        });
-        const objectUrl = URL.createObjectURL(file);
-        setEpaperData({
-          title_mr: item.title_mr,
-          date: item.date,
-          pdfUrl: objectUrl,
-          fileName: item.fileName
-        });
-        showToast('ई-पेपर PDF यशस्वीरीत्या सेव्ह व प्रकाशित झाली!');
-      } catch (err) {
-        console.error(err);
-        alert('PDF सेव्ह करताना एरर आली. कृपया पुन्हा प्रयत्न करा.');
-      }
-    }
-  };
-
-  // Delete E-Paper PDF Handler
-  const handleDeleteEpaperPdf = async () => {
-    if (window.confirm('तुम्हाला सध्याचा ई-पेपर कायमचा हटवायचा आहे का? (Confirm delete e-paper PDF?)')) {
-      await deleteEpaperPdf();
-      setEpaperData({
-        title_mr: "उमरगा वार्ता - आजची मुख्य आवृत्ती",
-        date: new Date().toLocaleDateString('mr-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-        pdfUrl: "",
-        fileName: ""
-      });
-      if (epaperPdfRef.current) epaperPdfRef.current.value = '';
-      showToast('ई-पेपर यशस्वीरीत्या हटवण्यात आला!');
-    }
-  };
-
   // Sync selected rashi form
   useEffect(() => {
-    const r = rashiList.find(x => x.id === selectedAdminRashiId);
+    const r = rashiList.find(x => x && x.id === selectedAdminRashiId);
     if (r) {
       setFormRashi({
         prediction_mr: r.prediction_mr || '',
@@ -192,10 +174,10 @@ export default function AdminPage() {
 
   const showToast = (msg) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
+    setTimeout(() => setToastMsg(''), 3500);
   };
 
-  // Secure Login Handler: Exact ID & Password requested
+  // Secure Login Handler
   const handleSecureLogin = (e) => {
     e.preventDefault();
     if (inputUsername === 'adminmahesh' && inputPassword === 'admin55@') {
@@ -215,43 +197,48 @@ export default function AdminPage() {
     navigate('/');
   };
 
-  // Image Upload Handler: Reads file, provides instant preview, compresses and uploads to Cloud CDN
+  // Image Upload Handler: Full validation, cloud upload to permanent HTTPS CDN
   const handleImageFileUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
-    if (file) {
-      if (file.size > 8 * 1024 * 1024) {
-        alert('कृपया 8MB पेक्षा लहान फोटो निवडा.');
-        return;
-      }
-      setIsUploadingImage(true);
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const rawBase64 = reader.result;
-        setImagePreview(rawBase64);
-        try {
-          // 1. Client-side compress first
-          const compressed = await compressBase64(rawBase64, 900, 0.75);
-          setFormNews(prev => ({ ...prev, image: compressed }));
+    if (!file) return;
 
-          // 2. Upload to Cloud CDN for universal URL access
-          const cloudUrl = await uploadImageToCloudCDN(compressed);
-          if (cloudUrl && cloudUrl.startsWith('http')) {
-            setImagePreview(cloudUrl);
-            setFormNews(prev => ({ ...prev, image: cloudUrl }));
-          }
-        } catch (err) {
-          console.warn('Image CDN upload warning:', err);
-        } finally {
-          setIsUploadingImage(false);
-        }
-      };
-      reader.readAsDataURL(file);
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setUploadStatus('फोटो लोड होत आहे...');
+
+    // Quick client-side preview for instant feedback
+    const localPreviewUrl = URL.createObjectURL(file);
+    setImagePreview(localPreviewUrl);
+
+    try {
+      const permanentCloudUrl = await uploadImageToCloud(file, (msg) => {
+        setUploadStatus(msg);
+      });
+
+      if (permanentCloudUrl) {
+        setImagePreview(permanentCloudUrl);
+        setFormNews(prev => ({ ...prev, image: permanentCloudUrl }));
+        showToast('फोटो क्लाउडवर सुरक्षितपणे सेव्ह झाला!');
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      alert('फोटो अपलोड करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.');
+    } finally {
+      setIsUploadingImage(false);
+      setUploadStatus('');
     }
   };
 
-  // Save News
-  const handleSaveNews = async (e) => {
-    e.preventDefault();
+  // Save / Publish News
+  const handleSaveNews = async (e, publishStatus = 'published') => {
+    if (e && e.preventDefault) e.preventDefault();
+
     if (!formNews.title_mr.trim() || !formNews.content_mr.trim()) {
       alert('कृपया मराठी बातमीचे शीर्षक व मजकूर आवश्यक भरा.');
       return;
@@ -259,17 +246,20 @@ export default function AdminPage() {
 
     let finalImageUrl = formNews.image || '/logo.jpg';
 
-    // If image is still a large base64 string, upload or compress it before saving
-    if (finalImageUrl.startsWith('data:')) {
+    // If image is still a local data URI or not yet uploaded to cloud, upload it now
+    if (finalImageUrl.startsWith('data:') || finalImageUrl.startsWith('blob:')) {
       try {
-        const cdnUrl = await uploadImageToCloudCDN(finalImageUrl);
-        if (cdnUrl && cdnUrl.startsWith('http')) {
-          finalImageUrl = cdnUrl;
-        } else {
-          finalImageUrl = await compressBase64(finalImageUrl, 800, 0.6);
+        setIsUploadingImage(true);
+        setUploadStatus('फोटो क्लाउड CDN वर सेव्ह होत आहे...');
+        const cloudUrl = await uploadImageToCloud(finalImageUrl, setUploadStatus);
+        if (cloudUrl) {
+          finalImageUrl = cloudUrl;
         }
       } catch (e) {
-        console.warn('Final image upload attempt note:', e);
+        console.warn('Final image upload attempt notice:', e);
+      } finally {
+        setIsUploadingImage(false);
+        setUploadStatus('');
       }
     }
 
@@ -290,7 +280,8 @@ export default function AdminPage() {
         category_en: autoCategoryEn,
         content_mr: formNews.content_mr,
         content_en: autoContentEn,
-        image: finalImageUrl
+        image: finalImageUrl,
+        status: publishStatus
       });
 
       setNews(prev => prev.map(item => {
@@ -303,12 +294,14 @@ export default function AdminPage() {
             category_en: autoCategoryEn,
             content_mr: formNews.content_mr,
             content_en: autoContentEn,
-            image: finalImageUrl
+            image: finalImageUrl,
+            status: publishStatus,
+            updatedAt: Date.now()
           };
         }
         return item;
       }));
-      showToast('बातमी यशस्वीरीत्या अपडेट करण्यात आली!');
+      showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'बातमी यशस्वीरीत्या अपडेट करण्यात आली!');
     } else {
       const now = Date.now();
       const newEntry = {
@@ -323,7 +316,9 @@ export default function AdminPage() {
         image: finalImageUrl,
         date: formattedPostDateTime,
         views: 150,
-        featured: false
+        featured: false,
+        status: publishStatus,
+        author: formNews.author || 'महेश निंबरगे'
       };
 
       addNewsToSupabase(newEntry).then(cloudDoc => {
@@ -334,9 +329,7 @@ export default function AdminPage() {
 
       const updatedNewsList = [newEntry, ...news];
       setNews(updatedNewsList);
-      localStorage.setItem('ow_news_v2', JSON.stringify(updatedNewsList));
-      saveNewsToCloud(updatedNewsList);
-      showToast('नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
+      showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
     }
 
     setEditingNewsId(null);
@@ -346,7 +339,8 @@ export default function AdminPage() {
       category_mr: 'उमरगा विशेष',
       image: '',
       content_mr: '',
-      author: 'महेश निंबरगे'
+      author: 'महेश निंबरगे',
+      status: 'published'
     });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -358,7 +352,8 @@ export default function AdminPage() {
       category_mr: story.category_mr || 'उमरगा विशेष',
       image: story.image || '',
       content_mr: story.content_mr || '',
-      author: story.author || 'महेश निंबरगे'
+      author: story.author || 'महेश निंबरगे',
+      status: story.status || 'published'
     });
     setImagePreview(story.image || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -369,13 +364,11 @@ export default function AdminPage() {
       deleteNewsFromSupabase(id);
       const remaining = news.filter(x => x.id !== id);
       setNews(remaining);
-      localStorage.setItem('ow_news_v2', JSON.stringify(remaining));
-      saveNewsToCloud(remaining);
       showToast('बातमी हटवली आहे.');
     }
   };
 
-  // Save Rashi with Today's Date Stamp (Replaces previous day's horoscope cleanly)
+  // Save Rashi with Today's Date Stamp
   const handleSaveRashi = (e) => {
     e.preventDefault();
     const autoPredEn = autoTranslateMarathiToEnglish(formRashi.prediction_mr);
@@ -388,7 +381,7 @@ export default function AdminPage() {
     });
 
     setRashiList(prev => prev.map(r => {
-      if (r.id === selectedAdminRashiId) {
+      if (r && r.id === selectedAdminRashiId) {
         return {
           ...r,
           prediction_mr: formRashi.prediction_mr,
@@ -404,8 +397,34 @@ export default function AdminPage() {
     showToast('आजचे राशी भविष्य अपडेट झाले!');
   };
 
+  // Upload ad banner image
+  const handleAdImageUpload = async (type, e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+    showToast('जाहिरात फोटो क्लाउडवर अपलोड होत आहे...');
+    try {
+      const url = await uploadImageToCloud(file);
+      if (url) {
+        setAdsConfig(prev => ({
+          ...prev,
+          [type]: {
+            ...prev[type],
+            imageUrl: url
+          }
+        }));
+        showToast('जाहिरात फोटो सेव्ह झाला!');
+      }
+    } catch (err) {
+      alert('अपलोड त्रुटी: ' + err.message);
+    }
+  };
+
   // ================= STRICT AUTH GUARD =================
-  // If not authenticated, render ONLY the secure login screen. Admin data cannot be accessed under any circumstances.
   if (!isAuthenticated) {
     return (
       <div className="admin-lock-screen">
@@ -501,6 +520,12 @@ export default function AdminPage() {
             <PlusCircle size={18} /> बातम्या व्यवस्थापन (News Management)
           </button>
           <button 
+            className={`admin-tab-btn ${adminTab === 'ads' ? 'active' : ''}`}
+            onClick={() => setAdminTab('ads')}
+          >
+            <Megaphone size={18} /> जाहिरात व्यवस्थापन (Advertisements)
+          </button>
+          <button 
             className={`admin-tab-btn ${adminTab === 'rashi' ? 'active' : ''}`}
             onClick={() => setAdminTab('rashi')}
           >
@@ -518,7 +543,7 @@ export default function AdminPage() {
                 {editingNewsId ? 'बातमी संपादित करा' : 'नवीन बातमी पोस्ट करा'}
               </h3>
 
-              <form onSubmit={handleSaveNews} className="admin-form">
+              <form onSubmit={(e) => handleSaveNews(e, 'published')} className="admin-form">
                 <div className="form-group">
                   <label>बातमीचे शीर्षक (मराठी) *</label>
                   <input 
@@ -557,7 +582,7 @@ export default function AdminPage() {
                     <input 
                       type="file" 
                       ref={fileInputRef}
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
                       onChange={handleImageFileUpload}
                       style={{ display: 'none' }}
                     />
@@ -565,16 +590,16 @@ export default function AdminPage() {
                       <div className="device-preview-box">
                         <img src={imagePreview} alt="Preview" className="device-img-preview" />
                         <div className="device-reselect-tag">
-                          {isUploadingImage ? 'फोटो क्लाउडवर अपलोड होत आहे...' : '✓ फोटो निवडला (दुसरा निवडण्यासाठी क्लिक करा)'}
+                          {isUploadingImage ? (uploadStatus || 'फोटो क्लाउडवर अपलोड होत आहे...') : '✓ फोटो क्लाउडवर जोडला (बदलण्यासाठी येथे क्लिक करा)'}
                         </div>
                       </div>
                     ) : (
                       <div className="device-empty-upload">
                         <Upload size={30} color="#0b3c75" />
                         <p style={{ fontWeight: 700, margin: '6px 0 2px' }}>
-                          {isUploadingImage ? 'फोटो प्रक्रिया सुरू आहे...' : 'गॅलरी / कॉम्प्युटरमधून फोटो निवडा'}
+                          {isUploadingImage ? (uploadStatus || 'फोटो प्रक्रिया सुरू आहे...') : 'गॅलरी / कॅमेरा / कॉम्प्युटरमधून फोटो निवडा'}
                         </p>
-                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 8MB - आपोआप ऑप्टिमाइझ केला जाईल)</small>
+                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 10MB - आपोआप क्लाउडवर कायमस्वरूपी सुरक्षित सेव्ह होईल)</small>
                       </div>
                     )}
                   </div>
@@ -594,10 +619,25 @@ export default function AdminPage() {
                   </small>
                 </div>
 
-                <div className="form-action-btns">
-                  <button type="submit" className="btn-primary-action">
-                    {editingNewsId ? 'बदल सेव्ह करा (Update)' : 'पोर्टलवर प्रकाशित करा (Publish)'}
+                <div className="form-action-btns" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button 
+                    type="submit" 
+                    className="btn-primary-action"
+                    disabled={isUploadingImage}
+                  >
+                    {isUploadingImage ? 'फोटो अपलोड होत आहे...' : (editingNewsId ? 'बदल सेव्ह व प्रकाशित करा' : 'पोर्टलवर प्रकाशित करा (Publish)')}
                   </button>
+
+                  <button 
+                    type="button" 
+                    className="btn-primary-action"
+                    style={{ background: '#475569' }}
+                    onClick={(e) => handleSaveNews(e, 'draft')}
+                    disabled={isUploadingImage}
+                  >
+                    मसुदा सेव्ह करा (Save as Draft)
+                  </button>
+
                   {editingNewsId && (
                     <button 
                       type="button" 
@@ -610,7 +650,8 @@ export default function AdminPage() {
                           category_mr: 'उमरगा विशेष',
                           image: '',
                           content_mr: '',
-                          author: 'महेश निंबरगे'
+                          author: 'महेश निंबरगे',
+                          status: 'published'
                         });
                         if (fileInputRef.current) fileInputRef.current.value = '';
                       }}
@@ -625,7 +666,7 @@ export default function AdminPage() {
             {/* Published Stories List */}
             <div className="admin-card">
               <h3 className="admin-card-title">
-                प्रकाशित बातम्या ({news.length})
+                बातमी यादी ({news.length})
               </h3>
               <div className="admin-stories-list">
                 {news.map(item => (
@@ -639,6 +680,15 @@ export default function AdminPage() {
                     <div className="admin-story-content">
                       <div className="admin-story-top">
                         <span className="table-badge">{item.category_mr}</span>
+                        {item.status === 'draft' ? (
+                          <span style={{ background: '#f59e0b', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
+                            मसुदा (Draft)
+                          </span>
+                        ) : (
+                          <span style={{ background: '#10b981', color: '#fff', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
+                            प्रकाशित (Live)
+                          </span>
+                        )}
                         <span className="admin-story-date">{item.date || 'आज'}</span>
                       </div>
                       <h4 className="admin-story-title">{item.title_mr}</h4>
@@ -665,7 +715,171 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 2: RASHI */}
+        {/* TAB 2: ADVERTISEMENTS */}
+        {adminTab === 'ads' && (
+          <div className="admin-card" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <h3 className="admin-card-title">
+              <Megaphone size={20} color="#0b3c75" />
+              जाहिरात व्यवस्थापन (Advertisement Management)
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '24px' }}>
+              मुख्य पोर्टलवरील जाहिरात बॅनर, साइडबार जाहिरात आणि बातमीतील जाहिराती येथून थेट नियंत्रित करा.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              {/* Header Banner Ad */}
+              <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h4 style={{ color: '#0b3c75', fontSize: '1.1rem', margin: 0 }}>
+                    1. मुख्य मथळा जाहिरात (Top Header Banner)
+                  </h4>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                    <input 
+                      type="checkbox"
+                      checked={adsConfig.headerBanner?.enabled ?? true}
+                      onChange={(e) => setAdsConfig(prev => ({
+                        ...prev,
+                        headerBanner: { ...prev.headerBanner, enabled: e.target.checked }
+                      }))}
+                    />
+                    सक्रिय ठेवा (Active)
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <label>जाहिरात बॅनर फोटो</label>
+                  <input 
+                    type="file" 
+                    ref={adHeaderInputRef} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={(e) => handleAdImageUpload('headerBanner', e)}
+                  />
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button 
+                      type="button" 
+                      className="btn-primary-action"
+                      style={{ background: '#0b3c75', padding: '8px 16px', fontSize: '0.85rem' }}
+                      onClick={() => adHeaderInputRef.current && adHeaderInputRef.current.click()}
+                    >
+                      <Upload size={16} /> बॅनर फोटो निवडा (Upload Banner)
+                    </button>
+                    {adsConfig.headerBanner?.imageUrl && (
+                      <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
+                        ✓ बॅनर जोडला आहे
+                      </span>
+                    )}
+                  </div>
+                  {adsConfig.headerBanner?.imageUrl && (
+                    <div style={{ marginTop: '12px', maxWidth: '400px' }}>
+                      <img 
+                        src={adsConfig.headerBanner.imageUrl} 
+                        alt="Ad preview" 
+                        style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>क्लिक केल्यावर उघडणारी लिंक (WhatsApp किंवा Website Link)</label>
+                  <input 
+                    type="text" 
+                    value={adsConfig.headerBanner?.linkUrl || ''}
+                    onChange={(e) => setAdsConfig(prev => ({
+                      ...prev,
+                      headerBanner: { ...prev.headerBanner, linkUrl: e.target.value }
+                    }))}
+                    placeholder="उदा. https://api.whatsapp.com/send?phone=919890288228"
+                  />
+                </div>
+              </div>
+
+              {/* Sidebar Ad */}
+              <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h4 style={{ color: '#0b3c75', fontSize: '1.1rem', margin: 0 }}>
+                    2. साइडबार जाहिरात (Sidebar Banner)
+                  </h4>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                    <input 
+                      type="checkbox"
+                      checked={adsConfig.sidebarBanner?.enabled ?? true}
+                      onChange={(e) => setAdsConfig(prev => ({
+                        ...prev,
+                        sidebarBanner: { ...prev.sidebarBanner, enabled: e.target.checked }
+                      }))}
+                    />
+                    सक्रिय ठेवा (Active)
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <label>साइडबार जाहिरात फोटो</label>
+                  <input 
+                    type="file" 
+                    ref={adSidebarInputRef} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                    onChange={(e) => handleAdImageUpload('sidebarBanner', e)}
+                  />
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button 
+                      type="button" 
+                      className="btn-primary-action"
+                      style={{ background: '#0b3c75', padding: '8px 16px', fontSize: '0.85rem' }}
+                      onClick={() => adSidebarInputRef.current && adSidebarInputRef.current.click()}
+                    >
+                      <Upload size={16} /> साइडबार फोटो निवडा
+                    </button>
+                    {adsConfig.sidebarBanner?.imageUrl && (
+                      <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
+                        ✓ जाहिरात जोडली आहे
+                      </span>
+                    )}
+                  </div>
+                  {adsConfig.sidebarBanner?.imageUrl && (
+                    <div style={{ marginTop: '12px', maxWidth: '300px' }}>
+                      <img 
+                        src={adsConfig.sidebarBanner.imageUrl} 
+                        alt="Sidebar Ad" 
+                        style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>क्लिक केल्यावर उघडणारी लिंक</label>
+                  <input 
+                    type="text" 
+                    value={adsConfig.sidebarBanner?.linkUrl || ''}
+                    onChange={(e) => setAdsConfig(prev => ({
+                      ...prev,
+                      sidebarBanner: { ...prev.sidebarBanner, linkUrl: e.target.value }
+                    }))}
+                    placeholder="उदा. https://api.whatsapp.com/send?phone=919890288228"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              className="btn-primary-action" 
+              style={{ marginTop: '24px', width: '100%' }}
+              onClick={() => {
+                localStorage.setItem('ow_ads', JSON.stringify(adsConfig));
+                saveAdsToCloud(adsConfig);
+                showToast('जाहिरात सेटिंग्ज यशस्वीरीत्या सेव्ह झाल्या!');
+              }}
+            >
+              सर्व जाहिरात सेटिंग्ज सेव्ह करा (Save All Ads)
+            </button>
+          </div>
+        )}
+
+        {/* TAB 3: RASHI */}
         {adminTab === 'rashi' && (
           <div className="admin-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <h3 className="admin-card-title">

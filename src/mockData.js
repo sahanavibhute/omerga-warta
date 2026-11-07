@@ -158,3 +158,28 @@ export const DEFAULT_RASHI = [
     lucky_number: 3
   }
 ];
+
+
+export const DEFAULT_ADS = {
+  headerBanner: {
+    enabled: true,
+    title: 'उमरगा वार्ता डिजिटल जाहिरात',
+    imageUrl: '',
+    linkUrl: 'https://api.whatsapp.com/send?phone=919890288228&text=%E0%A4%9C%E0%A4%BE%E0%A4%B9%E0%A4%BF%E0%A4%B0%E0%A4%BE%E0%A4%A4%E0%A5%80%E0%A4%B8%E0%A4%BE%E0%A4%A0%E0%A5%80%20%E0%A4%B8%E0%A4%82%E0%A4%AA%E0%A4%B0%E0%A5%8D%E0%A4%95',
+    altText: 'येथे आपल्या व्यवसायाची आकर्षक जाहिरात द्या'
+  },
+  sidebarBanner: {
+    enabled: true,
+    title: 'विशेष व्यावसायिक जाहिरात',
+    imageUrl: '',
+    linkUrl: 'https://api.whatsapp.com/send?phone=919890288228&text=%E0%A4%9C%E0%A4%BE%E0%A4%B9%E0%A4%BF%E0%A4%B0%E0%A4%BE%E0%A4%A4%E0%A5%80%E0%A4%B8%E0%A4%BE%E0%A4%A0%E0%A5%80%20%E0%A4%B8%E0%A4%82%E0%A4%AA%E0%A4%B0%E0%A5%8D%E0%A4%95',
+    altText: 'व्यावसायिक जाहिरातीसाठी संपर्क: मोबा. +91 98902 88228'
+  },
+  inArticleBanner: {
+    enabled: true,
+    title: 'बातमी जाहिरात',
+    imageUrl: '',
+    linkUrl: 'https://api.whatsapp.com/send?phone=919890288228',
+    altText: 'उमरगा वार्ता डिजिटल जाहिरात'
+  }
+};
