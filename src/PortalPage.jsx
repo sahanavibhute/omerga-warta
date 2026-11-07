@@ -20,10 +20,8 @@ import {
   TrendingUp, 
   Search, 
   Lock, 
-  Menu,
-  FileText
+  Menu
 } from 'lucide-react';
-import { getEpaperPdf } from './pdfStorage';
 import { fetchNewsFromSupabase } from './supabase';
 import { fetchNewsFromCloud, fetchRashiFromCloud } from './cloudSync';
 import './App.css';
@@ -39,48 +37,68 @@ export default function PortalPage() {
 
   // News State: Auto-filters any posts older than 7 days (1 week)
   const [news, setNews] = useState(() => {
-    // Purge legacy mock data cache if present
-    const saved = localStorage.getItem('ow_news_v2');
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const initial = saved ? JSON.parse(saved) : [];
-    if (!Array.isArray(initial) || initial.length === 0) return [];
-    return initial.filter(item => {
-      // Discard any old mock items (id <= 4)
-      if (typeof item.id === 'number' && item.id < 1000) return false;
-      const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-      return itemTime >= oneWeekAgo;
-    });
+    try {
+      const saved = localStorage.getItem('ow_news_v2');
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const initial = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(initial) || initial.length === 0) return [];
+      return initial.filter(item => {
+        if (!item) return false;
+        if (typeof item.id === 'number' && item.id < 1000) return false;
+        const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
+        return itemTime >= oneWeekAgo;
+      });
+    } catch (e) {
+      console.warn('Initial news parse note:', e);
+      return [];
+    }
   });
 
   // Fetch real-time news from Cloud (syncs across laptop, phone, tablet)
   useEffect(() => {
-    // Clear legacy cache on first load of new version
-    if (localStorage.getItem('ow_news')) {
-      localStorage.removeItem('ow_news');
-    }
+    try {
+      if (localStorage.getItem('ow_news')) {
+        localStorage.removeItem('ow_news');
+      }
+    } catch (e) {}
 
     fetchNewsFromCloud().then(cloudPosts => {
       if (cloudPosts && Array.isArray(cloudPosts)) {
-        // Discard any legacy mock items with low id
-        const cleanPosts = cloudPosts.filter(item => !(typeof item.id === 'number' && item.id < 1000));
+        const cleanPosts = cloudPosts.filter(item => item && !(typeof item.id === 'number' && item.id < 1000));
         setNews(cleanPosts);
-        localStorage.setItem('ow_news_v2', JSON.stringify(cleanPosts));
+        try {
+          localStorage.setItem('ow_news_v2', JSON.stringify(cleanPosts));
+        } catch (e) {}
       }
     });
   }, []);
 
   // Rashi State
   const [rashiList, setRashiList] = useState(() => {
-    const saved = localStorage.getItem('ow_rashi');
-    return saved ? JSON.parse(saved) : DEFAULT_RASHI;
+    try {
+      const saved = localStorage.getItem('ow_rashi');
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const validRashi = parsed.filter(r => r && typeof r.id === 'number');
+        if (validRashi.length > 0) return validRashi;
+      }
+      return DEFAULT_RASHI;
+    } catch (e) {
+      return DEFAULT_RASHI;
+    }
   });
 
   // Sync real-time Rashi Bhavishya from Cloud
   useEffect(() => {
     fetchRashiFromCloud().then(cloudRashi => {
       if (cloudRashi && Array.isArray(cloudRashi) && cloudRashi.length > 0) {
-        setRashiList(cloudRashi);
-        localStorage.setItem('ow_rashi', JSON.stringify(cloudRashi));
+        const validCloudRashi = cloudRashi.filter(r => r && typeof r.id === 'number');
+        if (validCloudRashi.length > 0) {
+          setRashiList(validCloudRashi);
+          try {
+            localStorage.setItem('ow_rashi', JSON.stringify(validCloudRashi));
+          } catch (e) {}
+        }
       }
     });
   }, []);
@@ -146,22 +164,26 @@ export default function PortalPage() {
     return () => clearInterval(interval);
   }, [lang]);
 
-  const activeRashi = rashiList.find(r => r.id === selectedRashiId) || rashiList[0];
+  const activeRashi = (Array.isArray(rashiList) && rashiList.find(r => r && r.id === selectedRashiId)) 
+    || (Array.isArray(rashiList) && rashiList[0]) 
+    || DEFAULT_RASHI[0];
 
   const filteredNews = news.filter(item => {
-    const title = lang === 'mr' ? item.title_mr : (item.title_en || item.title_mr);
-    const category = item.category_mr;
+    if (!item) return false;
+    const title = (lang === 'mr' ? item.title_mr : (item.title_en || item.title_mr)) || '';
+    const category = item.category_mr || '';
     const matchesCategory = selectedCategory === 'ALL' || category === selectedCategory;
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const breakingHeadline = news.length > 0 
-    ? (lang === 'mr' ? news[0].title_mr : (news[0].title_en || news[0].title_mr))
+  const breakingHeadline = (news.length > 0 && news[0])
+    ? ((lang === 'mr' ? news[0].title_mr : (news[0].title_en || news[0].title_mr)) || 'उमरगा वार्ता')
     : (lang === 'mr' ? 'उमरगा वार्ता डिजिटल पोर्टलवर आपले स्वागत आहे.' : 'Welcome to Omerga Warta News Portal.');
 
   const handleShareWhatsApp = (story) => {
-    const title = lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr);
+    if (!story) return;
+    const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
     const text = encodeURIComponent(`*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर:\n${window.location.origin}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -308,23 +330,23 @@ export default function PortalPage() {
                   <div className="hero-img-wrap">
                     <img 
                       src={filteredNews[0].image || '/logo.jpg'} 
-                      alt={filteredNews[0].title_mr}
+                      alt={filteredNews[0].title_mr || 'News'} 
                       onError={(e) => { e.target.src = '/logo.jpg'; }}
                     />
                     <span className="hero-tag">
-                      {lang === 'mr' ? filteredNews[0].category_mr : (filteredNews[0].category_en || filteredNews[0].category_mr)}
+                      {lang === 'mr' ? (filteredNews[0].category_mr || 'उमरगा विशेष') : (filteredNews[0].category_en || filteredNews[0].category_mr || 'News')}
                     </span>
                   </div>
                   <div className="hero-details">
                     <div className="story-meta-line">
-                      <span><Clock size={14} /> {filteredNews[0].date}</span>
+                      <span><Clock size={14} /> {filteredNews[0].date || currentDateStr}</span>
                       <span><Eye size={14} /> {filteredNews[0].views || 1200} वाचन</span>
                     </div>
                     <h3 className="hero-title">
                       {lang === 'mr' ? filteredNews[0].title_mr : (filteredNews[0].title_en || filteredNews[0].title_mr)}
                     </h3>
                     <p className="hero-snippet">
-                      {(lang === 'mr' ? filteredNews[0].content_mr : (filteredNews[0].content_en || filteredNews[0].content_mr)).slice(0, 200)}...
+                      {((lang === 'mr' ? filteredNews[0].content_mr : (filteredNews[0].content_en || filteredNews[0].content_mr)) || '').slice(0, 200)}...
                     </p>
                     <div className="hero-action-line">
                       <span className="read-more-link">{t.readMore}</span>
@@ -341,26 +363,27 @@ export default function PortalPage() {
 
               <div className="news-cards-grid">
                 {filteredNews.slice(1).map(story => {
+                  if (!story) return null;
                   const displayTitle = lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr);
-                  const displaySnippet = lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr);
-                  const displayCat = lang === 'mr' ? story.category_mr : (story.category_en || story.category_mr);
+                  const displaySnippet = ((lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr)) || '');
+                  const displayCat = lang === 'mr' ? (story.category_mr || 'उमरगा वार्ता') : (story.category_en || story.category_mr || 'News');
 
                   return (
                     <article 
-                      key={story.id} 
+                      key={story.id || Math.random()} 
                       className="news-grid-card"
                       onClick={() => setActiveStory(story)}
                     >
                       <div className="card-thumb-wrap">
                         <img 
                           src={story.image || '/logo.jpg'} 
-                          alt={displayTitle} 
+                          alt={displayTitle || 'News'} 
                           onError={(e) => { e.target.src = '/logo.jpg'; }}
                         />
                         <span className="card-cat-badge">{displayCat}</span>
                       </div>
                       <div className="card-body">
-                        <div className="card-time"><Clock size={13} /> {story.date}</div>
+                        <div className="card-time"><Clock size={13} /> {story.date || currentDateStr}</div>
                         <h4 className="card-title">{displayTitle}</h4>
                         <p className="card-desc">{displaySnippet.slice(0, 110)}...</p>
                         <div className="card-footer-action">

@@ -1,18 +1,22 @@
-// Universal Real-Time Redis Cloud Sync for Omerga Warta (उमरगा वार्ता)
-// Powered by Upstash Global Redis REST API
-// Guaranteed instant sync across all phones, computers, and tablets.
+// Cloud Real-Time Storage Sync for Omerga Warta (उमरगा वार्ता)
+// Backed by resilient ExtendsClass Cloud Storage (Bin: edbeaff)
+// Seamlessly syncs articles and photos across all phones, tablets, and laptops.
 
-const UPSTASH_REST_URL = 'https://relaxed-gator-234366.upstash.io';
-const UPSTASH_REST_TOKEN = 'gQAAAAAAA5N-AQIgcDE1YWIzNWIyNGFkZmQ0M2Y2YmY4M2ZkMDVjODhhNGZiNA';
+const STORAGE_BIN_ID = 'edbeaff';
+const STORAGE_API_URL = `https://extendsclass.com/api/json-storage/bin/${STORAGE_BIN_ID}`;
 
-// 7-day auto-expiry cutoff in milliseconds
+// One week in milliseconds for automatic 7-day purging of old posts
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Filter items older than 7 days
+ */
 export function filterOlderThanOneWeek(items) {
   if (!Array.isArray(items)) return [];
   const cutoff = Date.now() - ONE_WEEK_MS;
   return items.filter(item => {
-    // Exclude mock news items
+    if (!item) return false;
+    // Exclude mock news items with low id
     if (typeof item.id === 'number' && item.id < 1000) return false;
     const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
     return itemTime >= cutoff;
@@ -20,96 +24,108 @@ export function filterOlderThanOneWeek(items) {
 }
 
 /**
- * Fetch latest news articles from Redis Cloud Database
+ * Fetch latest news articles from Cloud Storage with timeout safety
  */
 export async function fetchNewsFromCloud() {
   try {
-    const res = await fetch(`${UPSTASH_REST_URL}/get/ow_news`, {
-      headers: {
-        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`
-      }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const data = await res.json();
-      if (data && data.result) {
-        const parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
-        if (Array.isArray(parsed)) {
-          return filterOlderThanOneWeek(parsed);
-        }
+      if (data && Array.isArray(data.news)) {
+        return filterOlderThanOneWeek(data.news);
       }
     }
   } catch (err) {
-    console.warn('Upstash fetchNewsFromCloud note:', err);
+    console.warn('Cloud news fetch note:', err);
   }
   return null;
 }
 
 /**
- * Push news articles list to Redis Cloud Database
+ * Push news articles list to Cloud Storage
  */
 export async function saveNewsToCloud(newsList) {
   try {
     const freshNews = filterOlderThanOneWeek(newsList);
-    const res = await fetch(UPSTASH_REST_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(['SET', 'ow_news', JSON.stringify(freshNews)])
-    });
+    let existingData = { news: [], rashi: [] };
+    try {
+      const getRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`);
+      if (getRes.ok) {
+        existingData = await getRes.json();
+      }
+    } catch (e) {}
 
+    existingData.news = freshNews;
+
+    const res = await fetch(STORAGE_API_URL, {
+      method: 'PUT',
+      body: JSON.stringify(existingData),
+      headers: { 'Content-Type': 'application/json' }
+    });
     return res.ok;
   } catch (err) {
-    console.error('Upstash saveNewsToCloud error:', err);
+    console.error('Cloud news save error:', err);
     return false;
   }
 }
 
 /**
- * Fetch Rashi Bhavishya from Redis Cloud Database
+ * Fetch Rashi Bhavishya from Cloud Storage with timeout safety
  */
 export async function fetchRashiFromCloud() {
   try {
-    const res = await fetch(`${UPSTASH_REST_URL}/get/ow_rashi`, {
-      headers: {
-        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`
-      }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const data = await res.json();
-      if (data && data.result) {
-        const parsed = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+      if (data && Array.isArray(data.rashi) && data.rashi.length > 0) {
+        return data.rashi;
       }
     }
   } catch (err) {
-    console.warn('Upstash fetchRashiFromCloud note:', err);
+    console.warn('Cloud rashi fetch note:', err);
   }
   return null;
 }
 
 /**
- * Save Rashi Bhavishya to Redis Cloud Database
+ * Save Rashi Bhavishya to Cloud Storage
  */
 export async function saveRashiToCloud(rashiList) {
   try {
-    const res = await fetch(UPSTASH_REST_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${UPSTASH_REST_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(['SET', 'ow_rashi', JSON.stringify(rashiList)])
-    });
+    let existingData = { news: [], rashi: [] };
+    try {
+      const getRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`);
+      if (getRes.ok) {
+        existingData = await getRes.json();
+      }
+    } catch (e) {}
 
+    existingData.rashi = rashiList;
+
+    const res = await fetch(STORAGE_API_URL, {
+      method: 'PUT',
+      body: JSON.stringify(existingData),
+      headers: { 'Content-Type': 'application/json' }
+    });
     return res.ok;
   } catch (err) {
-    console.error('Upstash saveRashiToCloud error:', err);
+    console.error('Cloud rashi save error:', err);
     return false;
   }
 }
