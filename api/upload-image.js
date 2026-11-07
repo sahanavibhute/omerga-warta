@@ -1,12 +1,3 @@
-import { v2 as cloudinary } from 'cloudinary';
-
-// Configure Cloudinary using server-side environment variables if present
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
 export const config = {
   api: {
     bodyParser: {
@@ -29,21 +20,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, folder = 'omerga-warta' } = req.body || {};
+    const { image } = req.body || {};
 
     if (!image) {
       return res.status(400).json({ error: 'Image data is required' });
     }
 
+    // 1. Cloudinary if environment variables are present
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY || process.env.VITE_CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-    // 1. If Cloudinary credentials are provided in Vercel, upload to Cloudinary
     if (cloudName && apiKey && apiSecret) {
       try {
+        const { v2: cloudinary } = await import('cloudinary');
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret
+        });
+
         const uploadResult = await cloudinary.uploader.upload(image, {
-          folder,
+          folder: 'omerga-warta',
           resource_type: 'image',
           transformation: [
             { quality: 'auto:good' },
@@ -58,75 +56,42 @@ export default async function handler(req, res) {
           provider: 'cloudinary'
         });
       } catch (cErr) {
-        console.error('Cloudinary upload error:', cErr);
+        console.error('Cloudinary upload error:', cErr.message);
       }
     }
 
-    // 2. High-Availability Server-Side Fallback:
-    let base64Clean = image;
-    let mimeType = 'image/jpeg';
-    if (image.includes(',')) {
-      const parts = image.split(',');
-      base64Clean = parts[1];
-      const match = parts[0].match(/:(.*?);/);
-      if (match) mimeType = match[1];
-    }
-    const buffer = Buffer.from(base64Clean, 'base64');
-    const ext = mimeType.includes('png') ? 'png' : 'jpg';
-
-    // Provider A: Uguu.se
+    // 2. High-Availability Server-Side Fallback via Catbox
     try {
-      const form = new FormData();
-      form.append('files[]', new Blob([buffer], { type: mimeType }), `ow_${Date.now()}.${ext}`);
-
-      const uguuRes = await fetch('https://uguu.se/upload', {
-        method: 'POST',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        },
-        body: form
-      });
-
-      if (uguuRes.ok) {
-        const json = await uguuRes.json();
-        if (json && json.success && json.files && json.files[0] && json.files[0].url) {
-          return res.status(200).json({
-            success: true,
-            url: json.files[0].url,
-            provider: 'uguu-cdn'
-          });
-        }
+      let base64Clean = image;
+      let mimeType = 'image/jpeg';
+      if (image.includes(',')) {
+        const parts = image.split(',');
+        base64Clean = parts[1];
+        const match = parts[0].match(/:(.*?);/);
+        if (match) mimeType = match[1];
       }
-    } catch (uErr) {
-      console.error('Uguu upload error:', uErr);
-    }
+      const buffer = Buffer.from(base64Clean, 'base64');
+      const ext = mimeType.includes('png') ? 'png' : 'jpg';
 
-    // Provider B: Catbox
-    try {
       const formData = new FormData();
       formData.append('reqtype', 'fileupload');
       formData.append('fileToUpload', new Blob([buffer], { type: mimeType }), `ow_${Date.now()}.${ext}`);
 
       const catboxRes = await fetch('https://catbox.moe/user/api.php', {
         method: 'POST',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        },
         body: formData
       });
 
-      if (catboxRes.ok) {
-        const returnedUrl = await catboxRes.text();
-        if (returnedUrl && returnedUrl.trim().startsWith('http')) {
-          return res.status(200).json({
-            success: true,
-            url: returnedUrl.trim(),
-            provider: 'catbox-cdn'
-          });
-        }
+      const catboxText = await catboxRes.text();
+      if (catboxRes.ok && catboxText && catboxText.trim().startsWith('http')) {
+        return res.status(200).json({
+          success: true,
+          url: catboxText.trim(),
+          provider: 'catbox-cdn'
+        });
       }
     } catch (catErr) {
-      console.error('Catbox upload error:', catErr);
+      console.error('Catbox upload error:', catErr.message);
     }
 
     return res.status(502).json({
