@@ -16,6 +16,9 @@ export default async function handler(req, res) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const siteUrl = `${proto}://${host}`;
 
+  const userAgent = req.headers['user-agent'] || '';
+  const isSocialCrawler = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|TelegramBot/i.test(userAgent);
+
   let title = 'उमरगा वार्ता - Omerga Warta News Portal';
   let description = 'उमरगा शहर, तालुका आणि धाराशिव जिल्ह्यातील प्रत्येक घडामोडीचे विश्वासार्ह व्यासपीठ.';
   let imageUrl = `${siteUrl}/logo.jpg`;
@@ -38,7 +41,8 @@ export default async function handler(req, res) {
             description = article.content_mr.substring(0, 160).replace(/\s+/g, ' ').trim() + '...';
           }
           if (article.image) {
-            imageUrl = `${siteUrl}/api/image?id=${id}`;
+            // Clean direct .jpg URL without query parameters so WhatsApp accepts it immediately
+            imageUrl = `${siteUrl}/images/${id}.jpg`;
           }
         }
       }
@@ -48,6 +52,15 @@ export default async function handler(req, res) {
   }
 
   const destination = id ? `/?story=${encodeURIComponent(id)}` : '/';
+
+  // For social crawlers: DO NOT include <meta http-equiv="refresh"> or redirect scripts,
+  // because WhatsApp interprets client-side refresh as page abortion and cancels the preview.
+  const redirectTags = isSocialCrawler
+    ? ''
+    : `<meta http-equiv="refresh" content="0;url=${destination}" />
+  <script>
+    window.location.replace("${destination}");
+  </script>`;
 
   const html = `<!doctype html>
 <html lang="mr" prefix="og: http://ogp.me/ns#">
@@ -76,11 +89,8 @@ export default async function handler(req, res) {
   <meta name="twitter:description" content="${escapeHtml(description)}" />
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
 
-  <!-- Instant reader redirect for humans -->
-  <meta http-equiv="refresh" content="0;url=${destination}" />
-  <script>
-    window.location.replace("${destination}");
-  </script>
+  <!-- Instant reader redirect for humans only -->
+  ${redirectTags}
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; padding: 30px; text-align: center; background: #fffdf5; color: #1e293b;">
   <h2>${escapeHtml(title)}</h2>
