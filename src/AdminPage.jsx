@@ -943,13 +943,15 @@ export default function AdminPage() {
                   <label style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>
                     संपूर्ण पंचांग व राशी भविष्य मजकूर (Full Daily Script) *
                   </label>
-                  <button 
-                    type="button"
-                    onClick={() => setAstroText(DEFAULT_ASTRO_TEXT)}
-                    style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600, color: '#475569', cursor: 'pointer' }}
-                  >
-                    नमुना मजकूर भरा (Load Template)
-                  </button>
+                  {astroText && (
+                    <button 
+                      type="button"
+                      onClick={() => setAstroText('')}
+                      style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
+                    >
+                      मजकूर पुसा (Clear)
+                    </button>
+                  )}
                 </div>
                 
                 <textarea 

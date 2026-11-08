@@ -591,7 +591,14 @@ export default function PortalPage() {
             {astroActiveTab === 'panchang' && (
               <div style={{ background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fef08a' }}>
                 <div style={{ maxHeight: '420px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.86rem', lineHeight: '1.8', color: '#1e293b' }}>
-                  {astroData?.panchang || 'पंचांग लोड होत आहे...'}
+                  {astroData?.panchang ? (
+                    astroData.panchang
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
+                      <p style={{ margin: '0 0 6px', fontWeight: 600 }}>आजचे पंचांग अद्याप अपलोड केलेले नाही.</p>
+                      <small>संपादक कक्षातून पंचांग लवकरच प्रसिद्ध केले जाईल.</small>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -632,7 +639,14 @@ export default function PortalPage() {
                 {/* Active Zodiac Sign Card */}
                 {(() => {
                   const currentSign = (astroData?.rashis || []).find(s => s.name === selectedZodiacSign) || (astroData?.rashis?.[0]);
-                  if (!currentSign) return <p style={{ color: '#92400e' }}>राशी भविष्य उपलब्ध नाही.</p>;
+                  if (!currentSign || !currentSign.text) {
+                    return (
+                      <div style={{ background: '#ffffff', borderRadius: '10px', padding: '24px', border: '1px solid #fed7aa', textAlign: 'center', color: '#94a3b8' }}>
+                        <p style={{ margin: '0 0 6px', fontWeight: 600 }}>आजचे राशी भविष्य अद्याप अपलोड केलेले नाही.</p>
+                        <small>संपादक कक्षातून लवकरच प्रसिद्ध केले जाईल.</small>
+                      </div>
+                    );
+                  }
                   return (
                     <div style={{ background: '#ffffff', borderRadius: '10px', padding: '16px', border: '1.5px solid #fed7aa', boxShadow: '0 2px 8px rgba(180, 83, 9, 0.06)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', borderBottom: '1px solid #ffedd5', paddingBottom: '8px' }}>
@@ -649,7 +663,7 @@ export default function PortalPage() {
                         </div>
                       </div>
                       <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.7', color: '#1e293b' }}>
-                        {currentSign.text || 'आजचे राशी भविष्य उपलब्ध नाही.'}
+                        {currentSign.text}
                       </p>
                     </div>
                   );
@@ -661,7 +675,14 @@ export default function PortalPage() {
             {astroActiveTab === 'full' && (
               <div style={{ background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fef08a' }}>
                 <div style={{ maxHeight: '420px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.85rem', lineHeight: '1.75', color: '#1e293b' }}>
-                  {astroData?.raw || DEFAULT_ASTRO_TEXT}
+                  {astroData?.raw ? (
+                    astroData.raw
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
+                      <p style={{ margin: '0 0 6px', fontWeight: 600 }}>संपूर्ण पंचांग अद्याप उपलब्ध नाही.</p>
+                      <small>संपादक कक्षातून लवकरच प्रसिद्ध केले जाईल.</small>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
