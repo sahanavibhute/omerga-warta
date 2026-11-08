@@ -38,30 +38,24 @@ export default function PortalPage() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // News State: Auto-filters any posts older than 7 days (1 week)
-  const [isLoadingNews, setIsLoadingNews] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ow_news_v2');
-      return !saved || JSON.parse(saved).length === 0;
-    } catch (e) {
-      return true;
-    }
-  });
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
 
   const [news, setNews] = useState(() => {
     try {
       const saved = localStorage.getItem('ow_news_v2');
       const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const initial = saved ? JSON.parse(saved) : [];
-      if (!Array.isArray(initial) || initial.length === 0) return [];
-      return initial.filter(item => {
+      const initial = saved ? JSON.parse(saved) : (Array.isArray(DEFAULT_NEWS) ? DEFAULT_NEWS : []);
+      if (!Array.isArray(initial) || initial.length === 0) return Array.isArray(DEFAULT_NEWS) ? DEFAULT_NEWS : [];
+      const valid = initial.filter(item => {
         if (!item) return false;
         if (typeof item.id === 'number' && item.id < 1000) return false;
         const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
         return itemTime >= oneWeekAgo;
       });
+      return valid.length > 0 ? valid : (Array.isArray(DEFAULT_NEWS) ? DEFAULT_NEWS : []);
     } catch (e) {
       console.warn('Initial news parse note:', e);
-      return [];
+      return Array.isArray(DEFAULT_NEWS) ? DEFAULT_NEWS : [];
     }
   });
 

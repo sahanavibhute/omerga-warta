@@ -1,4 +1,34 @@
-export const DEFAULT_NEWS = [];
+export const DEFAULT_NEWS = [
+  {
+    "id": 1794035014224,
+    "createdAt": 1794035014224,
+    "title_mr": "उमरगा तालुक्यात संततधार पाऊस, शेतकरी वर्गात आनंदाचे वातावरण",
+    "title_en": "Heavy rain in Omerga taluka, farmers celebrate",
+    "category_mr": "उमरगा विशेष",
+    "category_en": "Omerga Special",
+    "content_mr": "उमरगा शहर व ग्रामीण भागात काल रात्रीपासून संततधार पावसाने हजेरी लावली आहे. यामुळे खरिपाच्या पिकांना मोठा दिलासा मिळाला असून विहिरी आणि जलसाठ्यांच्या पाणीपातळीत वाढ झाली आहे. शेतकऱ्यांनी समाधान व्यक्त केले आहे.",
+    "content_en": "Continuous rainfall in Omerga and rural areas brings relief to kharif crops.",
+    "image": "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=1000&auto=format&fit=crop&q=80",
+    "date": "७ नोव्हेंबर २०२६ • दुपारी १२:३०",
+    "views": 120,
+    "featured": false,
+    "status": "published",
+    "author": "महेश निंबरगे"
+  },
+  {
+    "id": 1794034636876,
+    "title_mr": "उमरगा वार्ता: डिजिटल आवृत्तीचे यशस्वी लोकार्पण",
+    "title_en": "Omerga Warta: Successful launch of digital edition",
+    "category_mr": "उमरगा विशेष",
+    "category_en": "Omerga Special",
+    "content_mr": "उमरगा वार्ता डिजिटल पोर्टलवर आजपासून सर्व ताज्या घडामोडी, बातम्या आणि फोटो वाचकांसाठी थेट उपलब्ध झाले आहेत. संपादक महेश निंबरगे यांनी वाचकांचे आभार मानले.",
+    "content_en": "All latest news and photos are now live on Omerga Warta digital.",
+    "image": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop&q=80",
+    "date": "7 नोव्हेंबर 2026",
+    "createdAt": 1794034636876,
+    "status": "published"
+  }
+];
 
 export const DEFAULT_RASHI = [
   {

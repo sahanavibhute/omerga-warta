@@ -11,9 +11,11 @@ export default function CloudImage({ src, alt, className, style, onError }) {
   const [resolvedSrc, setResolvedSrc] = useState(() => {
     if (!src) return '/logo.jpg';
     if (imageCache.has(src)) return imageCache.get(src);
-    // If it's a direct image file or data URI, return immediately
-    if (src.startsWith('data:') || src.startsWith('/') || src.includes('.jpg') || src.includes('.png') || src.includes('.webp') || src.includes('cloudinary.com')) {
-      return src;
+    // If it's a direct image file, HTTP/HTTPS URL, or data URI, return immediately
+    if (src.startsWith('data:') || src.startsWith('/') || src.startsWith('http://') || src.startsWith('https://')) {
+      if (!src.includes('extendsclass.com/api/json-storage/bin/')) {
+        return src;
+      }
     }
     return '/logo.jpg';
   });
@@ -24,7 +26,7 @@ export default function CloudImage({ src, alt, className, style, onError }) {
       return;
     }
 
-    if (src.startsWith('data:') || src.startsWith('/') || src.includes('.jpg') || src.includes('.png') || src.includes('.webp') || src.includes('cloudinary.com')) {
+    if (src.startsWith('data:') || src.startsWith('/') || (src.startsWith('http') && !src.includes('extendsclass.com/api/json-storage/bin/'))) {
       setResolvedSrc(src);
       return;
     }
