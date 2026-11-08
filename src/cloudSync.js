@@ -62,7 +62,26 @@ async function fetchFullBinData() {
 /**
  * Helper to save full bin data
  */
+/**
+ * Helper to save full bin data
+ * Routes through same-origin /api/news proxy to guarantee delivery without CORS/cellular blocks.
+ */
 async function saveFullBinData(data) {
+  // 1. Primary: Same-origin API endpoint
+  try {
+    const res = await fetch('/api/news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full: data })
+    });
+    if (res.ok) {
+      return true;
+    }
+  } catch (e) {
+    console.warn('Same-origin save note:', e);
+  }
+
+  // 2. Direct cloud bin fallback
   try {
     const res = await fetch(STORAGE_API_URL, {
       method: 'PUT',
