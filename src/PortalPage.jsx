@@ -32,8 +32,8 @@ import './App.css';
 export default function PortalPage() {
   const navigate = useNavigate();
 
-  // Language State: 'mr' (Marathi) or 'en' (English)
-  const [lang, setLang] = useState(() => localStorage.getItem('ow_lang') || 'mr');
+  // Language State: Marathi by default
+  const [lang, setLang] = useState('mr');
 
   // Mobile navigation hamburger toggle state
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -515,179 +515,35 @@ export default function PortalPage() {
           )}
 
           {/* DAILY ASTROLOGY & PANCHANG SECTION */}
-          <div className="rashi-glass-box" id="rashi" style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '14px', padding: '16px', boxShadow: '0 4px 14px rgba(217, 119, 6, 0.08)' }}>
-            <div className="rashi-widget-header" style={{ marginBottom: '14px', borderBottom: '1px solid #fef08a', paddingBottom: '10px' }}>
+          <div className="rashi-glass-box" id="rashi" style={{ background: '#fffdf5', border: '1.5px solid #fde68a', borderRadius: '14px', padding: '18px', boxShadow: '0 4px 14px rgba(217, 119, 6, 0.08)' }}>
+            <div className="rashi-widget-header" style={{ marginBottom: '14px', borderBottom: '1px solid #fef08a', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 className="rashi-widget-title" style={{ color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', fontWeight: 800 }}>
-                  <Sparkles size={20} color="#d97706" />
+                <h3 className="rashi-widget-title" style={{ color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
+                  <Sparkles size={22} color="#d97706" />
                   दैनिक पञ्चाङ्ग व राशी भविष्य
                 </h3>
-                <p className="rashi-widget-desc" style={{ color: '#b45309', margin: '3px 0 0', fontSize: '0.82rem' }}>
-                  {currentDateStr} • तिथी, नक्षत्र, मुहूर्त व १२ राशींचे भविष्य
+                <p className="rashi-widget-desc" style={{ color: '#b45309', margin: '4px 0 0', fontSize: '0.84rem' }}>
+                  {currentDateStr} • दैनिक ज्योतिष दर्शन
                 </p>
               </div>
-              <span className="daily-pill" style={{ background: '#d97706', color: '#fff', fontWeight: 700 }}>दैनिक</span>
+              <span className="daily-pill" style={{ background: '#d97706', color: '#fff', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem' }}>दैनिक</span>
             </div>
 
-            {/* Interactive View Selector Tabs */}
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', background: '#fef3c7', padding: '4px', borderRadius: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setAstroActiveTab('panchang')}
-                style={{
-                  flex: 1,
-                  padding: '7px 4px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: astroActiveTab === 'panchang' ? '#b45309' : 'transparent',
-                  color: astroActiveTab === 'panchang' ? '#ffffff' : '#92400e'
-                }}
-              >
-                📅 आजचे पंचांग
-              </button>
-              <button
-                type="button"
-                onClick={() => setAstroActiveTab('rashifal')}
-                style={{
-                  flex: 1,
-                  padding: '7px 4px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: astroActiveTab === 'rashifal' ? '#b45309' : 'transparent',
-                  color: astroActiveTab === 'rashifal' ? '#ffffff' : '#92400e'
-                }}
-              >
-                ♈ राशी भविष्य
-              </button>
-              <button
-                type="button"
-                onClick={() => setAstroActiveTab('full')}
-                style={{
-                  flex: 1,
-                  padding: '7px 4px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: astroActiveTab === 'full' ? '#b45309' : 'transparent',
-                  color: astroActiveTab === 'full' ? '#ffffff' : '#92400e'
-                }}
-              >
-                📜 संपूर्ण पंचांग
-              </button>
+            {/* Single Unified Scrollable Astro Bulletin Card */}
+            <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #fef08a', padding: '16px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.03)' }}>
+              {astroData?.raw ? (
+                <div style={{ maxHeight: '520px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.92rem', lineHeight: '1.85', color: '#1e293b', wordBreak: 'break-word', paddingRight: '6px' }}>
+                  {astroData.raw}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px 14px', color: '#94a3b8' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: '#64748b' }}>आजचे पंचांग व राशी भविष्य अद्याप अपलोड केलेले नाही.</p>
+                  <small style={{ color: '#94a3b8' }}>संपादक कक्षातून पंचांग प्रसिद्ध झाल्यानंतर येथे उपलब्ध होईल.</small>
+                </div>
+              )}
             </div>
 
-            {/* TAB 1: PANCHANG & MUHURAT */}
-            {astroActiveTab === 'panchang' && (
-              <div style={{ background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fef08a' }}>
-                <div style={{ maxHeight: '420px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.86rem', lineHeight: '1.8', color: '#1e293b' }}>
-                  {astroData?.panchang ? (
-                    astroData.panchang
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
-                      <p style={{ margin: '0 0 6px', fontWeight: 600 }}>आजचे पंचांग अद्याप अपलोड केलेले नाही.</p>
-                      <small>संपादक कक्षातून पंचांग लवकरच प्रसिद्ध केले जाईल.</small>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: 12 RASHI ZODIAC PREDICTIONS */}
-            {astroActiveTab === 'rashifal' && (
-              <div>
-                {/* Horizontal Scrolling Sign Selector */}
-                <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '12px' }}>
-                  {(astroData?.rashis || []).map(r => {
-                    const isSelected = r.name === selectedZodiacSign;
-                    return (
-                      <button
-                        key={r.id || r.name}
-                        onClick={() => setSelectedZodiacSign(r.name)}
-                        style={{
-                          flexShrink: 0,
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          border: isSelected ? '1.5px solid #b45309' : '1px solid #fde68a',
-                          background: isSelected ? '#b45309' : '#fff',
-                          color: isSelected ? '#fff' : '#78350f',
-                          fontWeight: 700,
-                          fontSize: '0.82rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        <span>{r.symbol}</span>
-                        <span>{r.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Active Zodiac Sign Card */}
-                {(() => {
-                  const currentSign = (astroData?.rashis || []).find(s => s.name === selectedZodiacSign) || (astroData?.rashis?.[0]);
-                  if (!currentSign || !currentSign.text) {
-                    return (
-                      <div style={{ background: '#ffffff', borderRadius: '10px', padding: '24px', border: '1px solid #fed7aa', textAlign: 'center', color: '#94a3b8' }}>
-                        <p style={{ margin: '0 0 6px', fontWeight: 600 }}>आजचे राशी भविष्य अद्याप अपलोड केलेले नाही.</p>
-                        <small>संपादक कक्षातून लवकरच प्रसिद्ध केले जाईल.</small>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div style={{ background: '#ffffff', borderRadius: '10px', padding: '16px', border: '1.5px solid #fed7aa', boxShadow: '0 2px 8px rgba(180, 83, 9, 0.06)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', borderBottom: '1px solid #ffedd5', paddingBottom: '8px' }}>
-                        <span style={{ fontSize: '1.8rem' }}>{currentSign.symbol}</span>
-                        <div>
-                          <h4 style={{ margin: 0, color: '#9a3412', fontSize: '1.1rem', fontWeight: 800 }}>
-                            {currentSign.name} रास
-                          </h4>
-                          {currentSign.letters && (
-                            <span style={{ fontSize: '0.78rem', color: '#9a3412', opacity: 0.85 }}>
-                              अक्षरे: {currentSign.letters}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.7', color: '#1e293b' }}>
-                        {currentSign.text}
-                      </p>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* TAB 3: FULL SCRIPTURE VIEW */}
-            {astroActiveTab === 'full' && (
-              <div style={{ background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fef08a' }}>
-                <div style={{ maxHeight: '420px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.85rem', lineHeight: '1.75', color: '#1e293b' }}>
-                  {astroData?.raw ? (
-                    astroData.raw
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8' }}>
-                      <p style={{ margin: '0 0 6px', fontWeight: 600 }}>संपूर्ण पंचांग अद्याप उपलब्ध नाही.</p>
-                      <small>संपादक कक्षातून लवकरच प्रसिद्ध केले जाईल.</small>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* WhatsApp Share Button for Panchang */}
+            {/* WhatsApp Share Button */}
             <button
               type="button"
               onClick={() => {
@@ -695,14 +551,14 @@ export default function PortalPage() {
                 window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
               }}
               style={{
-                marginTop: '12px',
+                marginTop: '14px',
                 width: '100%',
                 background: '#15803d',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '9px 12px',
-                fontSize: '0.85rem',
+                padding: '10px 14px',
+                fontSize: '0.88rem',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
