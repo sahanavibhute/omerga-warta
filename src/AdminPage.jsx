@@ -540,15 +540,15 @@ export default function AdminPage() {
             <ShieldCheck size={22} color="#10b981" />
             <div>
               <strong>उमरगा वार्ता | संपादक कक्ष</strong>
-              <span className="admin-auth-tag">Authenticated: adminmahesh</span>
+              <span className="admin-auth-tag">अधिकृत संपादक: महेश निंबरगे</span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="back-portal-btn" onClick={() => navigate('/')}>
-              <ArrowLeft size={15} /> पोर्टल पहा (View Site)
+              <ArrowLeft size={15} /> मुख्य पोर्टल पहा
             </button>
             <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={15} /> लॉगआउट (Logout)
+              <LogOut size={15} /> बाहेर पडा (लॉगआउट)
             </button>
           </div>
         </div>
@@ -561,19 +561,19 @@ export default function AdminPage() {
             className={`admin-tab-btn ${adminTab === 'news' ? 'active' : ''}`}
             onClick={() => setAdminTab('news')}
           >
-            <PlusCircle size={18} /> बातम्या व्यवस्थापन (News Management)
+            <PlusCircle size={18} /> बातम्या व्यवस्थापन
           </button>
           <button 
             className={`admin-tab-btn ${adminTab === 'ads' ? 'active' : ''}`}
             onClick={() => setAdminTab('ads')}
           >
-            <Megaphone size={18} /> जाहिरात व्यवस्थापन (Advertisements)
+            <Megaphone size={18} /> जाहिरात व्यवस्थापन
           </button>
           <button 
             className={`admin-tab-btn ${adminTab === 'rashi' ? 'active' : ''}`}
             onClick={() => setAdminTab('rashi')}
           >
-            <Sparkles size={18} /> राशी भविष्य अपडेट (Horoscope)
+            <Sparkles size={18} /> पञ्चाङ्ग व राशी भविष्य
           </button>
         </div>
 
@@ -597,28 +597,25 @@ export default function AdminPage() {
                     onChange={(e) => setFormNews({...formNews, title_mr: e.target.value})}
                     required
                   />
-                  <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                    <Sparkles size={14} /> इंग्रजी भाषांतर पोर्टल आपोआप तयार करेल.
-                  </small>
                 </div>
 
                 <div className="form-group">
-                  <label>विभाग (Category)</label>
+                  <label>विभाग (कॅटेगरी)</label>
                   <select 
                     value={formNews.category_mr}
                     onChange={(e) => setFormNews({...formNews, category_mr: e.target.value})}
                   >
-                    <option value="उमरगा विशेष">उमरगा विशेष (Omerga Special)</option>
-                    <option value="महाराष्ट्र / जिल्हा">महाराष्ट्र / जिल्हा (Maharashtra / District)</option>
-                    <option value="कृषी व बाजारभाव">कृषी व बाजारभाव (Agriculture & Market)</option>
-                    <option value="शिक्षण व करिअर">शिक्षण व करिअर (Education & Career)</option>
-                    <option value="राजकारण">राजकारण (Politics)</option>
+                    <option value="उमरगा विशेष">उमरगा विशेष</option>
+                    <option value="महाराष्ट्र / जिल्हा">महाराष्ट्र / जिल्हा</option>
+                    <option value="कृषी व बाजारभाव">कृषी व बाजारभाव</option>
+                    <option value="शिक्षण व करिअर">शिक्षण व करिअर</option>
+                    <option value="राजकारण">राजकारण</option>
                   </select>
                 </div>
 
                 {/* Device Image Upload */}
                 <div className="form-group">
-                  <label>बातमीचा फोटो (Device मधून निवडा) *</label>
+                  <label>बातमीचा फोटो (कॅमेरा / गॅलरीमधून निवडा) *</label>
                   <div 
                     className="device-upload-dropzone"
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
@@ -634,16 +631,16 @@ export default function AdminPage() {
                       <div className="device-preview-box">
                         <img src={imagePreview} alt="Preview" className="device-img-preview" />
                         <div className="device-reselect-tag">
-                          {isUploadingImage ? (uploadStatus || 'फोटो क्लाउडवर अपलोड होत आहे...') : '✓ फोटो क्लाउडवर जोडला (बदलण्यासाठी येथे क्लिक करा)'}
+                          {isUploadingImage ? (uploadStatus || 'फोटो क्लाउडवर अपलोड होत आहे...') : '✓ फोटो सुरक्षित जोडला (बदलण्यासाठी येथे क्लिक करा)'}
                         </div>
                       </div>
                     ) : (
                       <div className="device-empty-upload">
                         <Upload size={30} color="#0b3c75" />
                         <p style={{ fontWeight: 700, margin: '6px 0 2px' }}>
-                          {isUploadingImage ? (uploadStatus || 'फोटो प्रक्रिया सुरू आहे...') : 'गॅलरी / कॅमेरा / कॉम्प्युटरमधून फोटो निवडा'}
+                          {isUploadingImage ? (uploadStatus || 'फोटो प्रक्रिया सुरू आहे...') : 'मोबाईल गॅलरी, कॅमेरा किंवा कॉम्प्युटरमधून फोटो निवडा'}
                         </p>
-                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 10MB - आपोआप क्लाउडवर कायमस्वरूपी सुरक्षित सेव्ह होईल)</small>
+                        <small style={{ color: '#64748b' }}>JPG, PNG किंवा WebP (कमाल 10MB)</small>
                       </div>
                     )}
                   </div>
@@ -658,9 +655,6 @@ export default function AdminPage() {
                     onChange={(e) => setFormNews({...formNews, content_mr: e.target.value})}
                     required
                   />
-                  <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                    <Sparkles size={14} /> इंग्रजी मजकूर आपोआप तयार होईल.
-                  </small>
                 </div>
 
                 <div className="form-action-btns" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -669,7 +663,7 @@ export default function AdminPage() {
                     className="btn-primary-action"
                     disabled={isUploadingImage}
                   >
-                    {isUploadingImage ? 'फोटो अपलोड होत आहे...' : (editingNewsId ? 'बदल सेव्ह व प्रकाशित करा' : 'पोर्टलवर प्रकाशित करा (Publish)')}
+                    {isUploadingImage ? 'फोटो अपलोड होत आहे...' : (editingNewsId ? 'बदल सेव्ह व प्रकाशित करा' : 'पोर्टलवर प्रकाशित करा')}
                   </button>
 
                   <button 
@@ -679,7 +673,7 @@ export default function AdminPage() {
                     onClick={(e) => handleSaveNews(e, 'draft')}
                     disabled={isUploadingImage}
                   >
-                    मसुदा सेव्ह करा (Save as Draft)
+                    मसुदा सेव्ह करा
                   </button>
 
                   {editingNewsId && (
@@ -763,10 +757,10 @@ export default function AdminPage() {
           <div className="admin-card" style={{ maxWidth: '900px', margin: '0 auto' }}>
             <h3 className="admin-card-title">
               <Megaphone size={20} color="#0b3c75" />
-              जाहिरात व्यवस्थापन (Advertisement Management)
+              जाहिरात व्यवस्थापन
             </h3>
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '24px' }}>
-              मुख्य पोर्टलवरील जाहिरात बॅनर, साइडबार जाहिरात आणि बातमीतील जाहिराती येथून थेट नियंत्रित करा.
+              मुख्य पोर्टलवरील मथळा जाहिरात आणि साइडबार जाहिरात येथून थेट नियंत्रित करा.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -774,7 +768,7 @@ export default function AdminPage() {
               <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <h4 style={{ color: '#0b3c75', fontSize: '1.1rem', margin: 0 }}>
-                    1. मुख्य मथळा जाहिरात (Top Header Banner)
+                    १. मुख्य मथळा जाहिरात
                   </h4>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600 }}>
                     <input 
@@ -785,7 +779,7 @@ export default function AdminPage() {
                         headerBanner: { ...prev.headerBanner, enabled: e.target.checked }
                       }))}
                     />
-                    सक्रिय ठेवा (Active)
+                    सक्रिय ठेवा
                   </label>
                 </div>
 
@@ -805,7 +799,7 @@ export default function AdminPage() {
                       style={{ background: '#0b3c75', padding: '8px 16px', fontSize: '0.85rem' }}
                       onClick={() => adHeaderInputRef.current && adHeaderInputRef.current.click()}
                     >
-                      <Upload size={16} /> बॅनर फोटो निवडा (Upload Banner)
+                      <Upload size={16} /> बॅनर फोटो निवडा
                     </button>
                     {adsConfig.headerBanner?.imageUrl && (
                       <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
@@ -825,7 +819,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="form-group" style={{ marginTop: '12px' }}>
-                  <label>क्लिक केल्यावर उघडणारी लिंक (WhatsApp किंवा Website Link)</label>
+                  <label>क्लिक केल्यावर उघडणारी लिंक (व्हॉट्सॲप किंवा वेबसाईट लिंक)</label>
                   <input 
                     type="text" 
                     value={adsConfig.headerBanner?.linkUrl || ''}
@@ -842,7 +836,7 @@ export default function AdminPage() {
               <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <h4 style={{ color: '#0b3c75', fontSize: '1.1rem', margin: 0 }}>
-                    2. साइडबार जाहिरात (Sidebar Banner)
+                    २. साइडबार जाहिरात
                   </h4>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600 }}>
                     <input 
@@ -853,7 +847,7 @@ export default function AdminPage() {
                         sidebarBanner: { ...prev.sidebarBanner, enabled: e.target.checked }
                       }))}
                     />
-                    सक्रिय ठेवा (Active)
+                    सक्रिय ठेवा
                   </label>
                 </div>
 
@@ -917,7 +911,7 @@ export default function AdminPage() {
                 showToast('जाहिरात सेटिंग्ज यशस्वीरीत्या सेव्ह झाल्या!');
               }}
             >
-              सर्व जाहिरात सेटिंग्ज सेव्ह करा (Save All Ads)
+              सर्व जाहिरात सेटिंग्ज सेव्ह करा
             </button>
           </div>
         )}
@@ -929,10 +923,10 @@ export default function AdminPage() {
               <div>
                 <h3 className="admin-card-title" style={{ margin: 0 }}>
                   <Sparkles size={22} color="#f59e0b" />
-                  दैनिक पञ्चाङ्ग व राशी भविष्य व्यवस्थापन (Daily Astrology & Panchang)
+                  दैनिक पञ्चाङ्ग व राशी भविष्य व्यवस्थापन
                 </h3>
                 <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '4px 0 0' }}>
-                  दररोजचा पंचांग व १२ राशींचा संपूर्ण मजकूर खाली एकाच बॉक्समध्ये पेस्ट करा व प्रकाशित करा.
+                  दररोजचा पंचांग व १२ राशींचा संपूर्ण मजकूर खाली बॉक्समध्ये पेस्ट करा व प्रकाशित करा.
                 </p>
               </div>
             </div>
@@ -941,7 +935,7 @@ export default function AdminPage() {
               <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>
-                    संपूर्ण पंचांग व राशी भविष्य मजकूर (Full Daily Script) *
+                    संपूर्ण पंचांग व राशी भविष्य मजकूर *
                   </label>
                   {astroText && (
                     <button 
@@ -949,7 +943,7 @@ export default function AdminPage() {
                       onClick={() => setAstroText('')}
                       style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
                     >
-                      मजकूर पुसा (Clear)
+                      मजकूर पुसा
                     </button>
                   )}
                 </div>
@@ -959,68 +953,17 @@ export default function AdminPage() {
                   placeholder="येथे संपूर्ण पंचांग, गोचर ग्रह, शुभ मुहूर्त व आजचा राशिफल मजकूर पेस्ट करा..."
                   value={astroText}
                   onChange={(e) => setAstroText(e.target.value)}
-                  style={{ fontFamily: 'monospace', fontSize: '0.92rem', lineHeight: '1.6', padding: '14px', borderRadius: '8px', border: '1.5px solid #cbd5e1' }}
+                  style={{ fontFamily: 'inherit', fontSize: '0.92rem', lineHeight: '1.7', padding: '14px', borderRadius: '8px', border: '1.5px solid #cbd5e1' }}
                   required
                 />
-                <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
-                  <Sparkles size={14} /> पोर्टल या मजकुरामधून पंचांग, शुभ मुहूर्त व १२ राशींचा डेटा आपोआप वेगळा करून सुंदर फॉरमॅटमध्ये दाखवेल.
-                </small>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <button type="submit" className="btn-primary-action" style={{ background: '#d97706', flex: 1, padding: '12px', fontSize: '1rem', fontWeight: 700 }}>
-                  <Sparkles size={18} /> पञ्चाङ्ग व राशी भविष्य पोर्टलवर प्रकाशित करा
+                  <Sparkles size={18} /> पञ्चाङ्ग व राशी भविष्य प्रकाशित करा
                 </button>
               </div>
             </form>
-
-            {/* LIVE PREVIEW OF PARSED SECTIONS */}
-            {astroText && (
-              <div style={{ marginTop: '30px', padding: '18px', background: '#fffbeb', borderRadius: '12px', border: '1px solid #fde68a' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                  <h4 style={{ margin: 0, color: '#92400e', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Eye size={18} /> पोर्टलवर कसे दिसेल याची चाचणी (Live Preview):
-                  </h4>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button 
-                      type="button"
-                      onClick={() => setAstroPreviewTab('panchang')}
-                      style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: astroPreviewTab === 'panchang' ? '#b45309' : '#fef3c7', color: astroPreviewTab === 'panchang' ? '#fff' : '#92400e' }}
-                    >
-                      📅 पञ्चाङ्ग
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setAstroPreviewTab('rashifal')}
-                      style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: astroPreviewTab === 'rashifal' ? '#b45309' : '#fef3c7', color: astroPreviewTab === 'rashifal' ? '#fff' : '#92400e' }}
-                    >
-                      ♈ राशी भविष्य
-                    </button>
-                  </div>
-                </div>
-
-                {astroPreviewTab === 'panchang' && (
-                  <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #fef08a', maxHeight: '300px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.88rem', lineHeight: '1.7', color: '#1e293b' }}>
-                    {parseAstrologyScript(astroText).panchang || 'पंचांग उपलब्ध नाही.'}
-                  </div>
-                )}
-
-                {astroPreviewTab === 'rashifal' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>
-                    {parseAstrologyScript(astroText).rashis.map(r => (
-                      <div key={r.id} style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
-                        <div style={{ fontWeight: 700, color: '#9a3412', marginBottom: '4px', fontSize: '0.95rem' }}>
-                          {r.symbol} {r.name}
-                        </div>
-                        <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5' }}>
-                          {r.text ? r.text.slice(0, 110) + '...' : 'भविष्य उपलब्ध नाही.'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>
