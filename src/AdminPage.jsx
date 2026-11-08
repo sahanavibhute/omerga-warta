@@ -834,7 +834,7 @@ export default function AdminPage() {
                   </div>
                   {adsConfig.headerBanner?.imageUrl && (
                     <div style={{ marginTop: '12px', maxWidth: '400px' }}>
-                      <img 
+                      <CloudImage 
                         src={adsConfig.headerBanner.imageUrl} 
                         alt="Ad preview" 
                         style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
@@ -902,7 +902,7 @@ export default function AdminPage() {
                   </div>
                   {adsConfig.sidebarBanner?.imageUrl && (
                     <div style={{ marginTop: '12px', maxWidth: '300px' }}>
-                      <img 
+                      <CloudImage 
                         src={adsConfig.sidebarBanner.imageUrl} 
                         alt="Sidebar Ad" 
                         style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #cbd5e1' }} 

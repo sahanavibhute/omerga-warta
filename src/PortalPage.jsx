@@ -364,11 +364,10 @@ export default function PortalPage() {
             rel="noopener noreferrer"
             style={{ display: 'block', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
-            <img 
+            <CloudImage 
               src={adsConfig.headerBanner.imageUrl} 
               alt={adsConfig.headerBanner.altText || 'Advertisement'} 
               style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block' }}
-              onError={(e) => { e.target.style.display = 'none'; }}
             />
           </a>
         </div>
@@ -498,11 +497,10 @@ export default function PortalPage() {
                 rel="noopener noreferrer"
                 style={{ display: 'block', borderRadius: '8px', overflow: 'hidden' }}
               >
-                <img 
+                <CloudImage 
                   src={adsConfig.sidebarBanner.imageUrl} 
                   alt={adsConfig.sidebarBanner.altText || 'Advertisement'} 
                   style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '6px' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
               </a>
             </div>
