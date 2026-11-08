@@ -264,9 +264,11 @@ export default function PortalPage() {
   const handleShareWhatsApp = (story) => {
     if (!story) return;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
-    // Append timestamp query parameter to bypass WhatsApp's local client cache for repeated tests
-    const shareUrl = `${window.location.origin}/news/${story.id}?t=${Date.now()}`;
-    const text = encodeURIComponent(`${shareUrl}\n\n*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर 👆`);
+    const shareUrl = `${window.location.origin}/news/${story.id}`;
+    // Exactly matches the proven Dharashiv Live / news portal format:
+    // [Headline]
+    // [URL]
+    const text = encodeURIComponent(`${title}\n${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
