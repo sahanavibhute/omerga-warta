@@ -10,23 +10,8 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-const CRAWLER_USER_AGENTS = [
-  'facebookexternalhit',
-  'whatsapp',
-  'twitterbot',
-  'telegrambot',
-  'slackbot',
-  'linkedinbot',
-  'pinterest',
-  'bingbot',
-  'googlebot'
-];
-
 export default async function handler(req, res) {
   const { id } = req.query;
-  const userAgent = (req.headers['user-agent'] || '').toLowerCase();
-  const isCrawler = CRAWLER_USER_AGENTS.some(bot => userAgent.includes(bot));
-
   const proto = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const siteUrl = `${proto}://${host}`;
@@ -64,12 +49,8 @@ export default async function handler(req, res) {
 
   const destination = id ? `/?story=${encodeURIComponent(id)}` : '/';
 
-  // If a real human browser opens the link, redirect immediately with standard 302
-  if (!isCrawler) {
-    return res.redirect(302, destination);
-  }
-
-  // If a social media crawler (WhatsApp, Facebook, Twitter) requests the page, serve the rich OpenGraph HTML
+  // Always return 200 with full Open Graph tags so every WhatsApp / Facebook / Telegram client parses the preview.
+  // Real humans are immediately redirected by JavaScript and meta-refresh to the reading modal.
   const html = `<!doctype html>
 <html lang="mr" prefix="og: http://ogp.me/ns#">
 <head>
@@ -78,7 +59,7 @@ export default async function handler(req, res) {
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   
-  <!-- Open Graph / WhatsApp / Facebook Preview -->
+  <!-- Open Graph / WhatsApp Preview Meta -->
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="उमरगा वार्ता" />
   <meta property="og:title" content="${escapeHtml(title)}" />
@@ -86,16 +67,21 @@ export default async function handler(req, res) {
   <meta property="og:image" content="${escapeHtml(imageUrl)}" />
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
   <meta property="og:image:type" content="image/jpeg" />
-  <meta property="og:image:width" content="600" />
-  <meta property="og:image:height" content="315" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
 
-  <!-- Twitter Preview -->
+  <!-- Twitter Preview Meta -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@omergavarta" />
   <meta name="twitter:title" content="${escapeHtml(title)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
   <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
+
+  <!-- Fast client redirect for humans -->
+  <meta http-equiv="refresh" content="0;url=${destination}" />
+  <script>
+    window.location.replace("${destination}");
+  </script>
 </head>
 <body style="font-family: system-ui, sans-serif; padding: 24px; text-align: center; background: #fffdf5; color: #1e293b;">
   <h2>${escapeHtml(title)}</h2>
