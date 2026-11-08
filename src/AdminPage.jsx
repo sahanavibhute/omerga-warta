@@ -35,11 +35,14 @@ import {
   saveNewsToCloud, 
   fetchRashiFromCloud, 
   saveRashiToCloud,
+  fetchAstroFromCloud,
+  saveAstroToCloud,
   fetchAdsFromCloud,
   saveAdsToCloud
 } from './cloudSync';
 import { validateImageFile, uploadImageToCloud } from './imageUpload';
 import CloudImage from './CloudImage';
+import { DEFAULT_ASTRO_TEXT, parseAstrologyScript } from './astroHelper';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -121,6 +124,17 @@ export default function AdminPage() {
     lucky_color_mr: ''
   });
 
+  // Astro Bulletin State (Daily Long-form Panchang & Rashifal)
+  const [astroText, setAstroText] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ow_astro_text');
+      return saved || DEFAULT_ASTRO_TEXT;
+    } catch (e) {
+      return DEFAULT_ASTRO_TEXT;
+    }
+  });
+  const [astroPreviewTab, setAstroPreviewTab] = useState('panchang'); // 'panchang', 'rashifal', 'raw'
+
   // Save changes to localStorage and Cloud Storage so all devices see updates
   useEffect(() => {
     try {
@@ -158,6 +172,14 @@ export default function AdminPage() {
     fetchAdsFromCloud().then(cloudAds => {
       if (cloudAds) {
         setAdsConfig(cloudAds);
+      }
+    });
+    fetchAstroFromCloud().then(cloudAstro => {
+      if (cloudAstro && cloudAstro.raw) {
+        setAstroText(cloudAstro.raw);
+        try {
+          localStorage.setItem('ow_astro_text', cloudAstro.raw);
+        } catch (e) {}
       }
     });
   }, []);
@@ -396,6 +418,27 @@ export default function AdminPage() {
       return r;
     }));
     showToast('आजचे राशी भविष्य अपडेट झाले!');
+  };
+
+  // Save Full Daily Astrology & Panchang Bulletin
+  const handleSaveAstroBulletin = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!astroText.trim()) {
+      alert('कृपया पंचांग व राशी भविष्याचा मजकूर पेस्ट करा.');
+      return;
+    }
+    const parsed = parseAstrologyScript(astroText);
+    try {
+      localStorage.setItem('ow_astro_text', astroText);
+    } catch (err) {}
+    
+    // Push full parsed object to Cloud
+    const success = await saveAstroToCloud(parsed);
+    if (success) {
+      showToast('दैनिक पंचांग व राशी भविष्य यशस्वीरीत्या प्रकाशित झाले!');
+    } else {
+      showToast('पंचांग स्थानिक पातळीवर सेव्ह झाले.');
+    }
   };
 
   // Upload ad banner image
@@ -879,61 +922,103 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 3: RASHI */}
+        {/* TAB 3: RASHI & PANCHANG */}
         {adminTab === 'rashi' && (
-          <div className="admin-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h3 className="admin-card-title">
-              <Sparkles size={20} color="#f59e0b" />
-              दैनिक राशी भविष्य अद्ययावत करा
-            </h3>
-
-            <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label style={{ fontSize: '1.05rem', fontWeight: 'bold' }}>रास निवडा (Select Sign):</label>
-              <select 
-                className="large-select"
-                value={selectedAdminRashiId} 
-                onChange={(e) => setSelectedAdminRashiId(Number(e.target.value))}
-              >
-                {rashiList.map(r => (
-                  <option key={r.id} value={r.id}>
-                    {r.symbol} {r.name_mr} ({r.name_en})
-                  </option>
-                ))}
-              </select>
+          <div className="admin-card" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 className="admin-card-title" style={{ margin: 0 }}>
+                  <Sparkles size={22} color="#f59e0b" />
+                  दैनिक पञ्चाङ्ग व राशी भविष्य व्यवस्थापन (Daily Astrology & Panchang)
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '4px 0 0' }}>
+                  दररोजचा पंचांग व १२ राशींचा संपूर्ण मजकूर खाली एकाच बॉक्समध्ये पेस्ट करा व प्रकाशित करा.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSaveRashi} className="admin-form">
+            <form onSubmit={handleSaveAstroBulletin} className="admin-form">
               <div className="form-group">
-                <label>शुभ रंग (मराठी)</label>
-                <input 
-                  type="text" 
-                  placeholder="उदा. पिवळा / केशरी"
-                  value={formRashi.lucky_color_mr}
-                  onChange={(e) => setFormRashi({...formRashi, lucky_color_mr: e.target.value})}
-                />
-                <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                  <Sparkles size={14} /> Lucky Color इंग्रजीत आपोआप सेव्ह होईल.
-                </small>
-              </div>
-
-              <div className="form-group">
-                <label>आजचे राशी भविष्य (मराठी) *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>
+                    संपूर्ण पंचांग व राशी भविष्य मजकूर (Full Daily Script) *
+                  </label>
+                  <button 
+                    type="button"
+                    onClick={() => setAstroText(DEFAULT_ASTRO_TEXT)}
+                    style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '4px 10px', fontSize: '0.8rem', fontWeight: 600, color: '#475569', cursor: 'pointer' }}
+                  >
+                    नमुना मजकूर भरा (Load Template)
+                  </button>
+                </div>
+                
                 <textarea 
-                  rows={5} 
-                  placeholder="आजचा दिवस कसा राहील, काय काळजी घ्यावी..."
-                  value={formRashi.prediction_mr}
-                  onChange={(e) => setFormRashi({...formRashi, prediction_mr: e.target.value})}
+                  rows={14} 
+                  placeholder="येथे संपूर्ण पंचांग, गोचर ग्रह, शुभ मुहूर्त व आजचा राशिफल मजकूर पेस्ट करा..."
+                  value={astroText}
+                  onChange={(e) => setAstroText(e.target.value)}
+                  style={{ fontFamily: 'monospace', fontSize: '0.92rem', lineHeight: '1.6', padding: '14px', borderRadius: '8px', border: '1.5px solid #cbd5e1' }}
                   required
                 />
-                <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                  <Sparkles size={14} /> English Horoscope Prediction पोर्टल आपोआप तयार करेल.
+                <small style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
+                  <Sparkles size={14} /> पोर्टल या मजकुरामधून पंचांग, शुभ मुहूर्त व १२ राशींचा डेटा आपोआप वेगळा करून सुंदर फॉरमॅटमध्ये दाखवेल.
                 </small>
               </div>
 
-              <button type="submit" className="btn-primary-action" style={{ background: '#d97706' }}>
-                राशी भविष्य सेव्ह करा
-              </button>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <button type="submit" className="btn-primary-action" style={{ background: '#d97706', flex: 1, padding: '12px', fontSize: '1rem', fontWeight: 700 }}>
+                  <Sparkles size={18} /> पञ्चाङ्ग व राशी भविष्य पोर्टलवर प्रकाशित करा
+                </button>
+              </div>
             </form>
+
+            {/* LIVE PREVIEW OF PARSED SECTIONS */}
+            {astroText && (
+              <div style={{ marginTop: '30px', padding: '18px', background: '#fffbeb', borderRadius: '12px', border: '1px solid #fde68a' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h4 style={{ margin: 0, color: '#92400e', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Eye size={18} /> पोर्टलवर कसे दिसेल याची चाचणी (Live Preview):
+                  </h4>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button 
+                      type="button"
+                      onClick={() => setAstroPreviewTab('panchang')}
+                      style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: astroPreviewTab === 'panchang' ? '#b45309' : '#fef3c7', color: astroPreviewTab === 'panchang' ? '#fff' : '#92400e' }}
+                    >
+                      📅 पञ्चाङ्ग
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setAstroPreviewTab('rashifal')}
+                      style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: astroPreviewTab === 'rashifal' ? '#b45309' : '#fef3c7', color: astroPreviewTab === 'rashifal' ? '#fff' : '#92400e' }}
+                    >
+                      ♈ राशी भविष्य
+                    </button>
+                  </div>
+                </div>
+
+                {astroPreviewTab === 'panchang' && (
+                  <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #fef08a', maxHeight: '300px', overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.88rem', lineHeight: '1.7', color: '#1e293b' }}>
+                    {parseAstrologyScript(astroText).panchang || 'पंचांग उपलब्ध नाही.'}
+                  </div>
+                )}
+
+                {astroPreviewTab === 'rashifal' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>
+                    {parseAstrologyScript(astroText).rashis.map(r => (
+                      <div key={r.id} style={{ background: '#fff', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
+                        <div style={{ fontWeight: 700, color: '#9a3412', marginBottom: '4px', fontSize: '0.95rem' }}>
+                          {r.symbol} {r.name}
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5' }}>
+                          {r.text ? r.text.slice(0, 110) + '...' : 'भविष्य उपलब्ध नाही.'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

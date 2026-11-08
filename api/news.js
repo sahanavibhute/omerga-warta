@@ -60,6 +60,9 @@ export default async function handler(req, res) {
       if (Array.isArray(payload.rashi)) {
         existing.rashi = payload.rashi;
       }
+      if (payload.astro !== undefined) {
+        existing.astro = payload.astro;
+      }
       if (payload.ads !== undefined) {
         existing.ads = payload.ads;
       }

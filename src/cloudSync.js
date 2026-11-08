@@ -155,6 +155,35 @@ export async function saveRashiToCloud(rashiList) {
 }
 
 /**
+ * Fetch Full Daily Panchang & Astrology Bulletin
+ */
+export async function fetchAstroFromCloud() {
+  try {
+    const data = await fetchFullBinData();
+    if (data && data.astro) {
+      return data.astro;
+    }
+  } catch (err) {
+    console.warn('Cloud astro fetch note:', err);
+  }
+  return null;
+}
+
+/**
+ * Save Full Daily Panchang & Astrology Bulletin
+ */
+export async function saveAstroToCloud(astroData) {
+  try {
+    const existing = await fetchFullBinData();
+    existing.astro = astroData;
+    return await saveFullBinData(existing);
+  } catch (err) {
+    console.error('Cloud astro save error:', err);
+    return false;
+  }
+}
+
+/**
  * Fetch Advertisements configuration from Cloud Storage
  */
 export async function fetchAdsFromCloud() {
