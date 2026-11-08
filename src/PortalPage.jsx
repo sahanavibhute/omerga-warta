@@ -184,23 +184,23 @@ export default function PortalPage() {
     setLang(prev => prev === 'mr' ? 'en' : 'mr');
   };
 
-  // Helper text translations
+  // Helper text definitions (Pure Marathi)
   const t = {
-    location: lang === 'mr' ? 'उमरगा | धाराशिव जिल्हा | महाराष्ट्र' : 'Omerga | Dharashiv District | Maharashtra',
-    brandName: lang === 'mr' ? 'उमरगा वार्ता' : 'Omerga Warta',
-    brandSubtitle: lang === 'mr' ? 'संपादक - महेश शिवशंकर निंबरगे' : 'Editor - Mahesh Shivshankar Nimbarge',
-    tagline: lang === 'mr' ? 'सत्य, निर्भीड आणि निष्पक्ष पत्रकारिता' : 'Truth, Fearless and Impartial Journalism',
-    breaking: lang === 'mr' ? 'ब्रेकिंग न्यूज' : 'BREAKING NEWS',
-    mainNews: lang === 'mr' ? 'महत्त्वाच्या बातम्या (Main News)' : 'Top Headlines & Main News',
-    rashiTitle: lang === 'mr' ? 'आजचे राशी भविष्य' : "Today's Horoscope",
-    rashiSubtitle: lang === 'mr' ? 'आपली रास निवडून आजचा दिवस कसा असेल ते जाणून घ्या:' : 'Select your zodiac sign to read personalized predictions:',
-    luckyColor: lang === 'mr' ? 'शुभ रंग' : 'Lucky Color',
-    rulingPlanet: lang === 'mr' ? 'स्वामी ग्रह' : 'Ruling Planet',
-    readMore: lang === 'mr' ? 'सविस्तर बातमी वाचा →' : 'Read Full Story →',
-    adminLogin: lang === 'mr' ? 'संपादक कक्ष' : 'Staff Login',
-    filterAll: lang === 'mr' ? 'सर्व बातम्या' : 'All Stories',
-    shareWhatsapp: lang === 'mr' ? 'व्हॉट्सॲपवर शेअर करा' : 'Share on WhatsApp',
-    contactEditor: lang === 'mr' ? 'संपादकांशी संपर्क:' : 'Contact Bureau:'
+    location: 'उमरगा | धाराशिव जिल्हा | महाराष्ट्र',
+    brandName: 'उमरगा वार्ता',
+    brandSubtitle: 'संपादक - महेश शिवशंकर निंबरगे',
+    tagline: 'सत्य, निर्भीड आणि निष्पक्ष पत्रकारिता',
+    breaking: 'ताज्या घडामोडी',
+    mainNews: 'महत्त्वाच्या बातम्या',
+    rashiTitle: 'दैनिक पञ्चाङ्ग व राशी भविष्य',
+    rashiSubtitle: 'तिथी, नक्षत्र, मुहूर्त व १२ राशींचे दैनिक भविष्य',
+    luckyColor: 'शुभ रंग',
+    rulingPlanet: 'स्वामी ग्रह',
+    readMore: 'सविस्तर बातमी वाचा →',
+    adminLogin: 'संपादक कक्ष',
+    filterAll: 'सर्व बातम्या',
+    shareWhatsapp: 'व्हॉट्सॲपवर शेअर करा',
+    contactEditor: 'संपादकांशी संपर्क:'
   };
 
   // Dynamic Live Date that updates regularly
@@ -267,14 +267,8 @@ export default function PortalPage() {
           </div>
 
           <div className="meta-right">
-            {/* Language Switcher */}
-            <button className="lang-btn" onClick={toggleLang} title="भाषा बदला / Toggle Language">
-              <Globe size={16} />
-              <span>{lang === 'mr' ? 'English मध्ये वाचा' : 'मराठी आवृत्ती'}</span>
-            </button>
-
-            {/* Link to the Separate /admin route */}
-            <button className="admin-nav-btn" onClick={() => navigate('/admin')} title="Staff Login">
+            {/* Link to Staff / Admin route */}
+            <button className="admin-nav-btn" onClick={() => navigate('/admin')} title="संपादक कक्ष">
               <Lock size={13} />
               <span>{t.adminLogin}</span>
             </button>
@@ -647,32 +641,29 @@ export default function PortalPage() {
           <div className="footer-about">
             <h4 className="footer-heading">उमरगा वार्ता</h4>
             <p className="footer-text">
-              {lang === 'mr' 
-                ? "'उमरगा वार्ता' हे उमरगा आणि परिसरातील अग्रगण्य व विश्वासार्ह मराठी वृत्तपत्र आणि डिजिटल न्यूज पोर्टल आहे. RNI क्र. MAHMAR/2022/85957."
-                : "'Omerga Warta' is the prominent Marathi news platform and print journal serving Omerga and Dharashiv region."
-              }
+              'उमरगा वार्ता' हे उमरगा शहर, तालुका आणि धाराशिव जिल्ह्यातील अग्रगण्य, विश्वासार्ह व लोकप्रिय मराठी दैनिक न्यूज पोर्टल आहे. RNI क्र. MAHMAR/2022/85957.
             </p>
-            <p className="footer-credit"><strong>संपादक:</strong> महेश शिवशंकर निंबरगे</p>
-            <p className="footer-credit"><strong>Email:</strong> <a href="mailto:mnimbarge@gmail.com">mnimbarge@gmail.com</a></p>
+            <p className="footer-credit"><strong>मुख्य संपादक:</strong> महेश शिवशंकर निंबरगे</p>
+            <p className="footer-credit"><strong>ईमेल:</strong> <a href="mailto:mnimbarge@gmail.com">mnimbarge@gmail.com</a></p>
           </div>
 
           <div className="footer-links-col">
-            <h4 className="footer-heading">{lang === 'mr' ? 'महत्त्वाचे विभाग' : 'Key Sections'}</h4>
+            <h4 className="footer-heading">महत्त्वाचे विभाग</h4>
             <ul className="footer-nav">
-              <li><a href="#main-news">{lang === 'mr' ? 'ताज्या बातम्या' : 'Latest News'}</a></li>
-              <li><a href="#rashi">{lang === 'mr' ? 'राशी भविष्य (Horoscope)' : 'Daily Horoscope'}</a></li>
-              <li><a href="#local">{lang === 'mr' ? 'उमरगा शहर घडामोडी' : 'Omerga Town'}</a></li>
+              <li><a href="#main-news">ताज्या घडामोडी</a></li>
+              <li><a href="#rashi">दैनिक पञ्चाङ्ग व राशी भविष्य</a></li>
+              <li><a href="#local">उमरगा शहर बातमी</a></li>
               <li><button onClick={() => navigate('/admin')} className="footer-admin-link">{t.adminLogin}</button></li>
             </ul>
           </div>
 
           <div className="footer-contact-col">
-            <h4 className="footer-heading">{lang === 'mr' ? 'कार्यालय व संपर्क' : 'Bureau Office'}</h4>
+            <h4 className="footer-heading">कार्यालय व संपर्क</h4>
             <p className="footer-text">
-              <strong>{lang === 'mr' ? 'डिजिटल डेस्क:' : 'Digital Desk:'}</strong> {lang === 'mr' ? 'उमरगा वार्ता' : 'Omerga Warta'}
+              <strong>डिजिटल डेस्क:</strong> उमरगा वार्ता
             </p>
             <p className="footer-text">
-              मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - 413606.
+              मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - ४१३६०६.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
               <div className="footer-quick-badge">
@@ -687,7 +678,7 @@ export default function PortalPage() {
 
         <div className="footer-bottom-bar">
           <div className="container footer-bottom-inner">
-            <p>&copy; 2026 Omerga Warta (उमरगा वार्ता). सर्व हक्क राखीव. Designed with React & Modern UI.</p>
+            <p>&copy; २०२६ उमरगा वार्ता. सर्व हक्क सुरक्षित. सत्य, निर्भीड आणि निष्पक्ष पत्रकारिता.</p>
           </div>
         </div>
       </footer>
