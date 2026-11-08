@@ -26,7 +26,7 @@ export function filterOlderThanOneWeek(items) {
 /**
  * Helper to fetch complete bin data
  * Dual-tier fallback: First queries same-origin /api/news (bypasses any mobile carrier / ISP blocking),
- * then falls back directly to cloud storage bin and local bundle.
+ * then falls back directly to cloud storage bin.
  */
 async function fetchFullBinData() {
   // 1. Try same-origin /api/news proxy (zero CORS, zero mobile ISP blocks)
@@ -55,14 +55,6 @@ async function fetchFullBinData() {
   } catch (e) {
     console.warn('Full bin fetch note:', e);
   }
-
-  // 3. Static fallback bundle
-  try {
-    const res = await fetch(`/news-fallback.json?t=${Date.now()}`);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {}
 
   return { news: [], rashi: [], ads: null };
 }
