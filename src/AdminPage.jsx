@@ -479,18 +479,46 @@ export default function AdminPage() {
     try {
       const url = await uploadImageToCloud(file);
       if (url) {
-        setAdsConfig(prev => ({
-          ...prev,
-          [type]: {
-            ...prev[type],
-            imageUrl: url
-          }
-        }));
+        setAdsConfig(prev => {
+          const updated = {
+            ...prev,
+            [type]: {
+              ...prev[type],
+              imageUrl: url,
+              enabled: true
+            }
+          };
+          try {
+            localStorage.setItem('ow_ads', JSON.stringify(updated));
+          } catch (e) {}
+          saveAdsToCloud(updated);
+          return updated;
+        });
         showToast('जाहिरात फोटो सेव्ह झाला!');
       }
     } catch (err) {
       alert('अपलोड त्रुटी: ' + err.message);
     }
+  };
+
+  // Delete / Remove ad banner image
+  const handleDeleteAdImage = (type) => {
+    if (!window.confirm('तुम्हाला ही जाहिरात काढून टाकायची आहे का?')) return;
+    setAdsConfig(prev => {
+      const updated = {
+        ...prev,
+        [type]: {
+          ...prev[type],
+          imageUrl: ''
+        }
+      };
+      try {
+        localStorage.setItem('ow_ads', JSON.stringify(updated));
+      } catch (e) {}
+      saveAdsToCloud(updated);
+      return updated;
+    });
+    showToast('जाहिरात फोटो हटवला आहे.');
   };
 
   // ================= STRICT AUTH GUARD =================
@@ -827,9 +855,30 @@ export default function AdminPage() {
                       <Upload size={16} /> बॅनर फोटो निवडा
                     </button>
                     {adsConfig.headerBanner?.imageUrl && (
-                      <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
-                        ✓ बॅनर जोडला आहे
-                      </span>
+                      <>
+                        <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
+                          ✓ बॅनर जोडला आहे
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAdImage('headerBanner')}
+                          style={{
+                            background: '#fee2e2',
+                            color: '#b91c1c',
+                            border: '1px solid #fca5a5',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Trash2 size={14} /> जाहिरात हटवा
+                        </button>
+                      </>
                     )}
                   </div>
                   {adsConfig.headerBanner?.imageUrl && (
@@ -895,9 +944,30 @@ export default function AdminPage() {
                       <Upload size={16} /> साइडबार फोटो निवडा
                     </button>
                     {adsConfig.sidebarBanner?.imageUrl && (
-                      <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
-                        ✓ जाहिरात जोडली आहे
-                      </span>
+                      <>
+                        <span style={{ color: '#059669', fontSize: '0.85rem', fontWeight: 600 }}>
+                          ✓ जाहिरात जोडली आहे
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAdImage('sidebarBanner')}
+                          style={{
+                            background: '#fee2e2',
+                            color: '#b91c1c',
+                            border: '1px solid #fca5a5',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Trash2 size={14} /> जाहिरात हटवा
+                        </button>
+                      </>
                     )}
                   </div>
                   {adsConfig.sidebarBanner?.imageUrl && (
