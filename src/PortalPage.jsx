@@ -661,7 +661,7 @@ export default function PortalPage() {
               <strong>डिजिटल डेस्क:</strong> उमरगा वार्ता
             </p>
             <p className="footer-text">
-              मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - ४१३६०६.
+              मुख्य कार्यालय: बसवेश्वर चौक, मुरुम, ता. उमरगा, जि. धाराशिव, महाराष्ट्र - ४१३६०५.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
               <div className="footer-quick-badge">
