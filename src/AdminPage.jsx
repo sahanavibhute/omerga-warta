@@ -135,45 +135,70 @@ export default function AdminPage() {
   });
   const [astroPreviewTab, setAstroPreviewTab] = useState('panchang'); // 'panchang', 'rashifal', 'raw'
 
+  // Track initial cloud sync to avoid overwriting existing cloud data on first render
+  const isNewsInitializedRef = useRef(false);
+  const isRashiInitializedRef = useRef(false);
+  const isAdsInitializedRef = useRef(false);
+
   // Save changes to localStorage and Cloud Storage so all devices see updates
   useEffect(() => {
     try {
       localStorage.setItem('ow_news_v2', JSON.stringify(news));
     } catch (e) {}
-    saveNewsToCloud(news);
+    if (isNewsInitializedRef.current) {
+      saveNewsToCloud(news);
+    }
   }, [news]);
 
   useEffect(() => {
     try {
       localStorage.setItem('ow_rashi', JSON.stringify(rashiList));
     } catch (e) {}
-    saveRashiToCloud(rashiList);
+    if (isRashiInitializedRef.current) {
+      saveRashiToCloud(rashiList);
+    }
   }, [rashiList]);
 
   useEffect(() => {
     try {
       localStorage.setItem('ow_ads', JSON.stringify(adsConfig));
     } catch (e) {}
-    saveAdsToCloud(adsConfig);
+    if (isAdsInitializedRef.current) {
+      saveAdsToCloud(adsConfig);
+    }
   }, [adsConfig]);
 
   // On mount, load existing cloud news, rashi & ads if available
   useEffect(() => {
     fetchNewsFromCloud().then(cloudPosts => {
-      if (cloudPosts && Array.isArray(cloudPosts) && cloudPosts.length > 0) {
-        setNews(cloudPosts);
+      if (cloudPosts && Array.isArray(cloudPosts)) {
+        if (cloudPosts.length > 0) {
+          setNews(cloudPosts);
+        }
       }
+      isNewsInitializedRef.current = true;
+    }).catch(() => {
+      isNewsInitializedRef.current = true;
     });
+
     fetchRashiFromCloud().then(cloudRashi => {
       if (cloudRashi && Array.isArray(cloudRashi) && cloudRashi.length > 0) {
         setRashiList(cloudRashi);
       }
+      isRashiInitializedRef.current = true;
+    }).catch(() => {
+      isRashiInitializedRef.current = true;
     });
+
     fetchAdsFromCloud().then(cloudAds => {
       if (cloudAds) {
         setAdsConfig(cloudAds);
       }
+      isAdsInitializedRef.current = true;
+    }).catch(() => {
+      isAdsInitializedRef.current = true;
     });
+
     fetchAstroFromCloud().then(cloudAstro => {
       if (cloudAstro && cloudAstro.raw) {
         setAstroText(cloudAstro.raw);
