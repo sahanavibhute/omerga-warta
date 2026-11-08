@@ -265,7 +265,8 @@ export default function PortalPage() {
     if (!story) return;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
     const shareUrl = `${window.location.origin}/news/${story.id}`;
-    const text = encodeURIComponent(`*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर:\n${shareUrl}`);
+    // Putting the link first allows WhatsApp's preview scraper to immediately parse the OpenGraph card and thumbnail image
+    const text = encodeURIComponent(`${shareUrl}\n\n*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर 👆`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
