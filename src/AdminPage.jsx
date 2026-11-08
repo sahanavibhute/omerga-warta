@@ -487,10 +487,10 @@ export default function AdminPage() {
 
           <form onSubmit={handleSecureLogin} className="admin-form" style={{ marginTop: '18px' }}>
             <div className="form-group">
-              <label>संपादक आयडी (Admin ID)</label>
+              <label>संपादक आयडी</label>
               <input 
                 type="text" 
-                placeholder="Enter Admin ID" 
+                placeholder="संपादक आयडी टाका" 
                 value={inputUsername}
                 onChange={(e) => setInputUsername(e.target.value)}
                 autoFocus
@@ -499,10 +499,10 @@ export default function AdminPage() {
             </div>
 
             <div className="form-group">
-              <label>पासवर्ड (Password)</label>
+              <label>पासवर्ड</label>
               <input 
                 type="password" 
-                placeholder="••••••••" 
+                placeholder="पासवर्ड टाका" 
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
                 required
