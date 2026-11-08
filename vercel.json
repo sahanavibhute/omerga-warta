@@ -29,6 +29,10 @@
   ],
   "rewrites": [
     {
+      "source": "/news/:id",
+      "destination": "/api/share?id=:id"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

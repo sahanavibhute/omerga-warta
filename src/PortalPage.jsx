@@ -172,6 +172,20 @@ export default function PortalPage() {
   // Modal State for reading a news story in full
   const [activeStory, setActiveStory] = useState(null);
 
+  // Auto-open story from URL query parameter (e.g. from WhatsApp share link: /?story=123)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const storyId = params.get('story');
+      if (storyId && news.length > 0) {
+        const found = news.find(item => String(item.id) === String(storyId));
+        if (found) {
+          setActiveStory(found);
+        }
+      }
+    } catch (e) {}
+  }, [news]);
+
   // Category filter on main portal
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -250,7 +264,8 @@ export default function PortalPage() {
   const handleShareWhatsApp = (story) => {
     if (!story) return;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
-    const text = encodeURIComponent(`*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर:\n${window.location.origin}`);
+    const shareUrl = `${window.location.origin}/news/${story.id}`;
+    const text = encodeURIComponent(`*${title}*\n\nसविस्तर वाचा 'उमरगा वार्ता' डिजिटल वर:\n${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
