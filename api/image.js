@@ -53,7 +53,14 @@ async function getArticleById(id) {
 export default async function handler(req, res) {
   const { id } = req.query;
 
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   try {
     if (id) {
