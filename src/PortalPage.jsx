@@ -264,11 +264,20 @@ export default function PortalPage() {
   const handleShareWhatsApp = (story) => {
     if (!story) return;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
+    const content = ((lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr)) || '')
+      .split('\n')[0]
+      .substring(0, 120);
     const shareUrl = `${window.location.origin}/news/${story.id}`;
-    // Exactly matches the proven Dharashiv Live / news portal format:
-    // [Headline]
-    // [URL]
-    const text = encodeURIComponent(`${title}\n${shareUrl}`);
+    
+    // Multi-line preview text with Headline + Snippet + Link:
+    // When pasted into WhatsApp, WhatsApp displays the rich card (image + title + description) above,
+    // and this formatted text below, matching genuine Marathi news portal broadcasts.
+    const text = encodeURIComponent(
+      `*${title}*\n\n` +
+      `${content ? `${content}...\n\n` : ''}` +
+      `संपूर्ण बातमी व फोटो पाहण्यासाठी खालील लिंकवर क्लिक करा:\n` +
+      `${shareUrl}`
+    );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
