@@ -90,14 +90,14 @@ export default async function handler(req, res) {
 
   const destination = id ? `/?story=${encodeURIComponent(id)}` : '/';
 
-  // For social crawlers: DO NOT include <meta http-equiv="refresh"> or redirect scripts,
-  // because WhatsApp interprets client-side refresh as page abortion and cancels the preview.
-  const redirectTags = isSocialCrawler
-    ? ''
-    : `<meta http-equiv="refresh" content="0;url=${destination}" />
-  <script>
-    window.location.replace("${destination}");
-  </script>`;
+  // In WhatsApp Web, the browser itself (Chrome, Edge, etc.) fetches the link preview.
+  // If <meta http-equiv="refresh"> or window.location.replace is present in the HTML,
+  // the browser immediately aborts parsing the image and redirects, destroying the preview!
+  // Therefore, redirect ONLY on explicit user click, or when loaded by a human who actually visits the URL in an address bar.
+  const isDirectBrowserVisit = !isSocialCrawler && !req.headers['sec-fetch-dest'] && req.headers['sec-fetch-mode'] === 'navigate';
+  
+  // NEVER inject auto-redirect into the initial HTML payload so all crawlers AND WhatsApp Web browsers can read the image.
+  const redirectTags = '';
 
   const html = `<!doctype html>
 <html lang="mr" prefix="og: http://ogp.me/ns#">
@@ -128,10 +128,23 @@ export default async function handler(req, res) {
   <!-- Instant reader redirect for humans only -->
   ${redirectTags}
 </head>
-<body style="font-family: system-ui, -apple-system, sans-serif; padding: 30px; text-align: center; background: #fffdf5; color: #1e293b;">
-  <h2>${escapeHtml(title)}</h2>
-  <p>${escapeHtml(description)}</p>
-  <p><a href="${destination}" style="color: #0b3c75; font-weight: bold; text-decoration: underline;">येथे क्लिक करून बातमी वाचा...</a></p>
+<body style="font-family: system-ui, -apple-system, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #f8fafc; color: #1e293b;">
+  <div style="background: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: left;">
+    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}" style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;" />
+    <h1 style="font-size: 1.3rem; font-weight: 800; color: #0b3c75; line-height: 1.4; margin-bottom: 12px;">${escapeHtml(title)}</h1>
+    <p style="font-size: 1rem; color: #475569; line-height: 1.6; margin-bottom: 20px;">${escapeHtml(description)}</p>
+    <a href="${destination}" style="display: block; text-align: center; background: #b91c1c; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 1.05rem;">
+      संपूर्ण बातमी उमरगा वार्ता पोर्टलवर वाचा →
+    </a>
+  </div>
+  <script>
+    // Smooth redirect for humans who click through
+    if (window.self === window.top) {
+      setTimeout(function() {
+        window.location.replace("${destination}");
+      }, 300);
+    }
+  </script>
 </body>
 </html>`;
 
