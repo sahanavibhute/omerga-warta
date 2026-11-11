@@ -6,16 +6,25 @@ const STORAGE_BIN_ID = 'edbeaff';
 const STORAGE_API_URL = `https://extendsclass.com/api/json-storage/bin/${STORAGE_BIN_ID}`;
 
 /**
- * Return all valid news items preserving archive history indefinitely
+ * Retention Policy:
+ * Preserves all posts up to 1000.
+ * Only if the total exceeds 1000, automatically trims the oldest entries past 1000.
+ * Under 1000 posts, NOTHING is deleted.
  */
 export function filterOlderThanOneWeek(items) {
   if (!Array.isArray(items)) return [];
-  return items.filter(item => {
+  const valid = items.filter(item => {
     if (!item) return false;
     // Exclude mock news items with low id
     if (typeof item.id === 'number' && item.id < 1000) return false;
     return true;
   });
+
+  // Strictly enforce 1000 post capacity limit (FIFO - First In, First Out)
+  if (valid.length > 1000) {
+    return valid.slice(0, 1000);
+  }
+  return valid;
 }
 
 /**

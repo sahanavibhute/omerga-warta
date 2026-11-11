@@ -131,7 +131,15 @@ export default async function handler(req, res) {
 
       // Merge payload
       if (Array.isArray(payload.news)) {
-        existing.news = payload.news;
+        // Strict FIFO Retention Policy:
+        // Only trigger auto-deletion when total posts EXCEED 1000.
+        // Never delete anything if post count <= 1000.
+        // When exceeding 1000, keep exactly the freshest 1000 posts (newest first).
+        if (payload.news.length > 1000) {
+          existing.news = payload.news.slice(0, 1000);
+        } else {
+          existing.news = payload.news;
+        }
       }
       if (Array.isArray(payload.rashi)) {
         existing.rashi = payload.rashi;
