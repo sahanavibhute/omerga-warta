@@ -34,7 +34,7 @@ import './App.css';
 export default function PortalPage() {
   const navigate = useNavigate();
 
-  // Language State: Marathi by default
+  // Language State: strictly 100% Marathi by default across all devices
   const [lang, setLang] = useState('mr');
 
   // Mobile navigation hamburger toggle state
@@ -263,20 +263,20 @@ export default function PortalPage() {
 
   const handleShareWhatsApp = (story) => {
     if (!story) return;
+    const shareUrl = `${window.location.origin}/news/${story.id}`;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
     const content = ((lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr)) || '')
       .split('\n')[0]
-      .substring(0, 120);
-    const shareUrl = `${window.location.origin}/news/${story.id}`;
+      .substring(0, 110);
     
-    // Multi-line preview text with Headline + Snippet + Link:
-    // When pasted into WhatsApp, WhatsApp displays the rich card (image + title + description) above,
-    // and this formatted text below, matching genuine Marathi news portal broadcasts.
+    // Crucial for WhatsApp Link Previews:
+    // When the URL is placed at the top on line 1, WhatsApp client immediately detects the link
+    // and fetches the image thumbnail into the card without text interference.
     const text = encodeURIComponent(
+      `${shareUrl}\n\n` +
       `*${title}*\n\n` +
       `${content ? `${content}...\n\n` : ''}` +
-      `संपूर्ण बातमी व फोटो पाहण्यासाठी खालील लिंकवर क्लिक करा:\n` +
-      `${shareUrl}`
+      `सविस्तर बातमी वाचण्यासाठी वरील लिंक उघडा.`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
