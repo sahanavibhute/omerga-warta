@@ -319,18 +319,7 @@ export default function AdminPage() {
     const autoCategoryEn = autoTranslateCategory(formNews.category_mr);
 
     if (editingNewsId) {
-      updateNewsInSupabase(editingNewsId, {
-        title_mr: formNews.title_mr,
-        title_en: autoTitleEn,
-        category_mr: formNews.category_mr,
-        category_en: autoCategoryEn,
-        content_mr: formNews.content_mr,
-        content_en: autoContentEn,
-        image: finalImageUrl,
-        status: publishStatus
-      });
-
-      setNews(prev => prev.map(item => {
+      const updated = news.map(item => {
         if (item.id === editingNewsId) {
           return {
             ...item,
@@ -346,7 +335,23 @@ export default function AdminPage() {
           };
         }
         return item;
-      }));
+      });
+
+      setNews(updated);
+      // Immediately persist to Cloud Database
+      saveNewsToCloud(updated);
+
+      updateNewsInSupabase(editingNewsId, {
+        title_mr: formNews.title_mr,
+        title_en: autoTitleEn,
+        category_mr: formNews.category_mr,
+        category_en: autoCategoryEn,
+        content_mr: formNews.content_mr,
+        content_en: autoContentEn,
+        image: finalImageUrl,
+        status: publishStatus
+      }).catch(() => {});
+
       showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'बातमी यशस्वीरीत्या अपडेट करण्यात आली!');
     } else {
       const now = Date.now();
@@ -367,14 +372,13 @@ export default function AdminPage() {
         author: formNews.author || 'महेश निंबरगे'
       };
 
-      addNewsToSupabase(newEntry).then(cloudDoc => {
-        if (cloudDoc && cloudDoc.id) {
-          newEntry.id = cloudDoc.id;
-        }
-      });
-
       const updatedNewsList = [newEntry, ...news];
       setNews(updatedNewsList);
+
+      // Immediately persist to Cloud Database (Upstash primary + ExtendsClass fallback)
+      saveNewsToCloud(updatedNewsList);
+
+      addNewsToSupabase(newEntry).catch(() => {});
       showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
     }
 
@@ -407,9 +411,10 @@ export default function AdminPage() {
 
   const handleDeleteClick = (id) => {
     if (window.confirm('तुम्हाला ही बातमी कायमची काढून टाकायची आहे का?')) {
-      deleteNewsFromSupabase(id);
+      deleteNewsFromSupabase(id).catch(() => {});
       const remaining = news.filter(x => x.id !== id);
       setNews(remaining);
+      saveNewsToCloud(remaining);
       showToast('बातमी हटवली आहे.');
     }
   };
