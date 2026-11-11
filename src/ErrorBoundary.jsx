@@ -72,6 +72,14 @@ export class ErrorBoundary extends React.Component {
             >
               रीलोड करा (Reload Portal)
             </button>
+            {this.state.error && (
+              <details style={{ marginTop: '18px', textAlign: 'left', background: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', fontSize: '11px', color: '#64748b' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600 }}>तांत्रिक तपशील (Error details)</summary>
+                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>
+                  {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );
