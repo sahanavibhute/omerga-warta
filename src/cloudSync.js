@@ -5,21 +5,16 @@
 const STORAGE_BIN_ID = 'edbeaff';
 const STORAGE_API_URL = `https://extendsclass.com/api/json-storage/bin/${STORAGE_BIN_ID}`;
 
-// One week in milliseconds for automatic 7-day purging of old posts
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
 /**
- * Filter items older than 7 days
+ * Return all valid news items preserving archive history indefinitely
  */
 export function filterOlderThanOneWeek(items) {
   if (!Array.isArray(items)) return [];
-  const cutoff = Date.now() - ONE_WEEK_MS;
   return items.filter(item => {
     if (!item) return false;
     // Exclude mock news items with low id
     if (typeof item.id === 'number' && item.id < 1000) return false;
-    const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-    return itemTime >= cutoff;
+    return true;
   });
 }
 

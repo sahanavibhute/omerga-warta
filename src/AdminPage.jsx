@@ -56,18 +56,16 @@ export default function AdminPage() {
   const [inputPassword, setInputPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // News State: Auto-filters any posts older than 7 days (1 week)
+  // News State: Preserves full archive history
   const [news, setNews] = useState(() => {
     try {
       const saved = localStorage.getItem('ow_news_v2');
-      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const initial = saved ? JSON.parse(saved) : [];
       if (!Array.isArray(initial) || initial.length === 0) return [];
       return initial.filter(item => {
         if (!item) return false;
         if (typeof item.id === 'number' && item.id < 1000) return false;
-        const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-        return itemTime >= oneWeekAgo;
+        return true;
       });
     } catch (e) {
       return [];

@@ -21,7 +21,9 @@ import {
   TrendingUp, 
   Search, 
   Lock, 
-  Menu
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import CloudImage from './CloudImage';
 import { fetchNewsFromSupabase } from './supabase';
@@ -51,14 +53,12 @@ export default function PortalPage() {
   const [news, setNews] = useState(() => {
     try {
       const saved = localStorage.getItem('ow_news_v2');
-      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const initial = saved ? JSON.parse(saved) : [];
       if (!Array.isArray(initial) || initial.length === 0) return [];
       return initial.filter(item => {
         if (!item) return false;
         if (typeof item.id === 'number' && item.id < 1000) return false;
-        const itemTime = item.createdAt || (typeof item.id === 'number' && item.id > 1000000 ? item.id : null) || Date.now();
-        return itemTime >= oneWeekAgo;
+        return true;
       });
     } catch (e) {
       console.warn('Initial news parse note:', e);
@@ -272,7 +272,17 @@ export default function PortalPage() {
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
-  const categories = ['ALL', 'उमरगा विशेष', 'महाराष्ट्र / जिल्हा', 'कृषी व बाजारभाव', 'शिक्षण व करिअर'];
+  // Pagination state: 10 stories per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const POSTS_PER_PAGE = 10;
+
+  // Reset to page 1 whenever category or search filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredNews.length / POSTS_PER_PAGE));
+  const paginatedStories = filteredNews.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
   return (
     <div className="news-app">
@@ -426,33 +436,34 @@ export default function PortalPage() {
             </div>
           ) : (
             <>
-              {filteredNews[0] && (
-                <article className="lead-hero-story" onClick={() => setActiveStory(filteredNews[0])}>
+              {/* Lead hero story on Page 1 */}
+              {currentPage === 1 && paginatedStories[0] && (
+                <article className="lead-hero-story" onClick={() => setActiveStory(paginatedStories[0])}>
                   <div className="hero-img-wrap">
                     <CloudImage 
-                      src={filteredNews[0].image} 
-                      alt={filteredNews[0].title_mr || 'News'} 
+                      src={paginatedStories[0].image} 
+                      alt={paginatedStories[0].title_mr || 'News'} 
                     />
                     <span className="hero-tag">
-                      {lang === 'mr' ? (filteredNews[0].category_mr || 'उमरगा विशेष') : (filteredNews[0].category_en || filteredNews[0].category_mr || 'News')}
+                      {lang === 'mr' ? (paginatedStories[0].category_mr || 'उमरगा विशेष') : (paginatedStories[0].category_en || paginatedStories[0].category_mr || 'News')}
                     </span>
                   </div>
                   <div className="hero-details">
                     <div className="story-meta-line">
-                      <span><Clock size={14} /> {filteredNews[0].date || currentDateStr}</span>
-                      <span><Eye size={14} /> {filteredNews[0].views || 1200} वाचन</span>
+                      <span><Clock size={14} /> {paginatedStories[0].date || currentDateStr}</span>
+                      <span><Eye size={14} /> {paginatedStories[0].views || 1200} वाचन</span>
                     </div>
                     <h3 className="hero-title">
-                      {lang === 'mr' ? filteredNews[0].title_mr : (filteredNews[0].title_en || filteredNews[0].title_mr)}
+                      {lang === 'mr' ? paginatedStories[0].title_mr : (paginatedStories[0].title_en || paginatedStories[0].title_mr)}
                     </h3>
                     <p className="hero-snippet">
-                      {((lang === 'mr' ? filteredNews[0].content_mr : (filteredNews[0].content_en || filteredNews[0].content_mr)) || '').slice(0, 200)}...
+                      {((lang === 'mr' ? paginatedStories[0].content_mr : (paginatedStories[0].content_en || paginatedStories[0].content_mr)) || '').slice(0, 200)}...
                     </p>
                     <div className="hero-action-line">
                       <span className="read-more-link">{t.readMore}</span>
                       <button 
                         className="btn-quick-share" 
-                        onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(filteredNews[0]); }}
+                        onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(paginatedStories[0]); }}
                       >
                         <Share2 size={15} /> {lang === 'mr' ? 'शेअर' : 'Share'}
                       </button>
@@ -462,7 +473,7 @@ export default function PortalPage() {
               )}
 
               <div className="news-cards-grid">
-                {filteredNews.slice(1).map(story => {
+                {(currentPage === 1 ? paginatedStories.slice(1) : paginatedStories).map(story => {
                   if (!story) return null;
                   const displayTitle = lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr);
                   const displaySnippet = ((lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr)) || '');
@@ -500,6 +511,100 @@ export default function PortalPage() {
                   );
                 })}
               </div>
+
+              {/* PAGINATION CONTROLS */}
+              {totalPages > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '28px',
+                  marginBottom: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => {
+                      setCurrentPage(p => Math.max(1, p - 1));
+                      window.scrollTo({ top: 400, behavior: 'smooth' });
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: currentPage === 1 ? '#f8fafc' : '#ffffff',
+                      color: currentPage === 1 ? '#94a3b8' : '#0b3c75',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                      fontSize: '13px'
+                    }}
+                  >
+                    <ChevronLeft size={16} /> {lang === 'mr' ? 'मागे' : 'Previous'}
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                      .map((p, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        return (
+                          <React.Fragment key={p}>
+                            {prev && p - prev > 1 && <span style={{ padding: '0 4px', color: '#94a3b8' }}>...</span>}
+                            <button
+                              onClick={() => {
+                                setCurrentPage(p);
+                                window.scrollTo({ top: 400, behavior: 'smooth' });
+                              }}
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '8px',
+                                border: p === currentPage ? 'none' : '1px solid #cbd5e1',
+                                background: p === currentPage ? '#0b3c75' : '#ffffff',
+                                color: p === currentPage ? '#ffffff' : '#334155',
+                                cursor: 'pointer',
+                                fontWeight: p === currentPage ? 700 : 500,
+                                fontSize: '13px'
+                              }}
+                            >
+                              {p}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      setCurrentPage(p => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 400, behavior: 'smooth' });
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: currentPage === totalPages ? '#f8fafc' : '#ffffff',
+                      color: currentPage === totalPages ? '#94a3b8' : '#0b3c75',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                      fontWeight: 600,
+                      fontSize: '13px'
+                    }}
+                  >
+                    {lang === 'mr' ? 'पुढे' : 'Next'} <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </section>
