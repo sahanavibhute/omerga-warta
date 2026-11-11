@@ -272,6 +272,8 @@ export default function PortalPage() {
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
+  const categories = ['ALL', 'उमरगा विशेष', 'महाराष्ट्र / जिल्हा', 'कृषी व बाजारभाव', 'शिक्षण व करिअर'];
+
   // Pagination state: 10 stories per page
   const [currentPage, setCurrentPage] = useState(1);
   const POSTS_PER_PAGE = 10;
