@@ -31,8 +31,22 @@ export default async function handler(req, res) {
         headers: { 'Cache-Control': 'no-cache' }
       });
       if (upstream.ok) {
-        const data = await upstream.json();
-        const article = (data.news || []).find(item => String(item.id) === String(id));
+        let data = null;
+        const raw = await upstream.text();
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          let end = raw.lastIndexOf('}');
+          while (end > 0) {
+            try {
+              data = JSON.parse(raw.slice(0, end + 1));
+              break;
+            } catch (retryErr) {
+              end = raw.lastIndexOf('}', end - 1);
+            }
+          }
+        }
+        const article = (data?.news || []).find(item => String(item.id) === String(id));
         if (article) {
           if (article.title_mr || article.title_en) {
             title = (article.title_mr || article.title_en).trim();
