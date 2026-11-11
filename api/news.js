@@ -6,6 +6,23 @@ export const config = {
   }
 };
 
+function parseRobustJson(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    let end = raw.lastIndexOf('}');
+    while (end > 0) {
+      try {
+        return JSON.parse(raw.slice(0, end + 1));
+      } catch (e) {
+        end = raw.lastIndexOf('}', end - 1);
+      }
+    }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
@@ -25,8 +42,11 @@ export default async function handler(req, res) {
         headers: { 'Cache-Control': 'no-cache' }
       });
       if (upstreamRes.ok) {
-        const data = await upstreamRes.json();
-        return res.status(200).json(data);
+        const raw = await upstreamRes.text();
+        const data = parseRobustJson(raw);
+        if (data && (Array.isArray(data.news) || Array.isArray(data.rashi))) {
+          return res.status(200).json(data);
+        }
       }
     } catch (err) {
       console.warn('API news upstream GET note:', err);
@@ -49,7 +69,11 @@ export default async function handler(req, res) {
           headers: { 'Cache-Control': 'no-cache' }
         });
         if (existingRes.ok) {
-          existing = await existingRes.json();
+          const raw = await existingRes.text();
+          const parsed = parseRobustJson(raw);
+          if (parsed) {
+            existing = parsed;
+          }
         }
       } catch (e) {}
 
