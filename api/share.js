@@ -1,4 +1,6 @@
-const STORAGE_API_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
+const UPSTASH_URL = 'https://feasible-halibut-74410.upstash.io';
+const UPSTASH_TOKEN = 'gQAAAAAAASKqAQIgcDIyM2ZmNGZlMWUzZTY0YjZjODBhZTliYjVlNTMyZTAwNw';
+const EXTENDSCLASS_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -8,6 +10,51 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+async function getArticleById(id) {
+  // 1. Try high-speed Upstash first
+  try {
+    const res = await fetch(UPSTASH_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${UPSTASH_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['GET', 'omerga_news_data'])
+    });
+    if (res.ok) {
+      const resp = await res.json();
+      if (resp && resp.result) {
+        const data = JSON.parse(resp.result);
+        const found = (data?.news || []).find(item => String(item.id) === String(id));
+        if (found) return found;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fallback to ExtendsClass
+  try {
+    const upstream = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (upstream.ok) {
+      const raw = await upstream.text();
+      let end = raw.lastIndexOf('}');
+      while (end > 0) {
+        try {
+          const data = JSON.parse(raw.slice(0, end + 1));
+          const found = (data?.news || []).find(item => String(item.id) === String(id));
+          if (found) return found;
+          break;
+        } catch (retryErr) {
+          end = raw.lastIndexOf('}', end - 1);
+        }
+      }
+    }
+  } catch (e) {}
+
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -26,42 +73,18 @@ export default async function handler(req, res) {
 
   if (id) {
     canonicalUrl = `${siteUrl}/news/${id}`;
-    try {
-      const upstream = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      if (upstream.ok) {
-        let data = null;
-        const raw = await upstream.text();
-        try {
-          data = JSON.parse(raw);
-        } catch (parseErr) {
-          let end = raw.lastIndexOf('}');
-          while (end > 0) {
-            try {
-              data = JSON.parse(raw.slice(0, end + 1));
-              break;
-            } catch (retryErr) {
-              end = raw.lastIndexOf('}', end - 1);
-            }
-          }
-        }
-        const article = (data?.news || []).find(item => String(item.id) === String(id));
-        if (article) {
-          if (article.title_mr || article.title_en) {
-            title = (article.title_mr || article.title_en).trim();
-          }
-          if (article.content_mr) {
-            description = article.content_mr.substring(0, 160).replace(/\s+/g, ' ').trim() + '...';
-          }
-          if (article.image) {
-            // Clean direct .jpg URL without query parameters so WhatsApp accepts it immediately
-            imageUrl = `${siteUrl}/images/${id}.jpg`;
-          }
-        }
+    const article = await getArticleById(id);
+    if (article) {
+      if (article.title_mr || article.title_en) {
+        title = (article.title_mr || article.title_en).trim();
       }
-    } catch (e) {
-      console.warn('Share meta fetch error:', e);
+      if (article.content_mr) {
+        description = article.content_mr.substring(0, 160).replace(/\s+/g, ' ').trim() + '...';
+      }
+      if (article.image) {
+        // Clean direct .jpg URL without query parameters so WhatsApp accepts it immediately
+        imageUrl = `${siteUrl}/images/${id}.jpg`;
+      }
     }
   }
 

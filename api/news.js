@@ -23,6 +23,49 @@ function parseRobustJson(raw) {
   return null;
 }
 
+const UPSTASH_URL = 'https://feasible-halibut-74410.upstash.io';
+const UPSTASH_TOKEN = 'gQAAAAAAASKqAQIgcDIyM2ZmNGZlMWUzZTY0YjZjODBhZTliYjVlNTMyZTAwNw';
+const EXTENDSCLASS_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
+
+async function fetchFromUpstash() {
+  try {
+    const res = await fetch(UPSTASH_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${UPSTASH_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['GET', 'omerga_news_data'])
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.result) {
+        return JSON.parse(data.result);
+      }
+    }
+  } catch (e) {
+    console.warn('Upstash GET error:', e);
+  }
+  return null;
+}
+
+async function saveToUpstash(data) {
+  try {
+    const res = await fetch(UPSTASH_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${UPSTASH_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['SET', 'omerga_news_data', JSON.stringify(data)])
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Upstash SET error:', e);
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
@@ -33,24 +76,32 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const STORAGE_API_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
-
   // GET: Fetch real-time articles, rashi, and ads
   if (req.method === 'GET') {
+    // 1. Primary: High-speed Upstash Serverless Database
+    const upstashData = await fetchFromUpstash();
+    if (upstashData && (Array.isArray(upstashData.news) || Array.isArray(upstashData.rashi))) {
+      return res.status(200).json(upstashData);
+    }
+
+    // 2. Secondary Fallback: ExtendsClass Bin
     try {
-      const upstreamRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
+      const upstreamRes = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
         headers: { 'Cache-Control': 'no-cache' }
       });
       if (upstreamRes.ok) {
         const raw = await upstreamRes.text();
         const data = parseRobustJson(raw);
         if (data && (Array.isArray(data.news) || Array.isArray(data.rashi))) {
+          // Sync into Upstash in background
+          saveToUpstash(data).catch(() => {});
           return res.status(200).json(data);
         }
       }
     } catch (err) {
-      console.warn('API news upstream GET note:', err);
+      console.warn('Extendsclass fallback GET error:', err);
     }
+
     return res.status(200).json({ news: [], rashi: [], ads: null });
   }
 
@@ -62,20 +113,21 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Payload required' });
       }
 
-      // Fetch existing data first to merge
-      let existing = { news: [], rashi: [], ads: null };
-      try {
-        const existingRes = await fetch(`${STORAGE_API_URL}?t=${Date.now()}`, {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        if (existingRes.ok) {
-          const raw = await existingRes.text();
-          const parsed = parseRobustJson(raw);
-          if (parsed) {
-            existing = parsed;
+      // Fetch existing data from Upstash first (fastest and most reliable)
+      let existing = await fetchFromUpstash();
+      if (!existing) {
+        existing = { news: [], rashi: [], ads: null };
+        try {
+          const existingRes = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          if (existingRes.ok) {
+            const raw = await existingRes.text();
+            const parsed = parseRobustJson(raw);
+            if (parsed) existing = parsed;
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       // Merge payload
       if (Array.isArray(payload.news)) {
@@ -94,20 +146,23 @@ export default async function handler(req, res) {
         existing = payload.full;
       }
 
-      const saveRes = await fetch(STORAGE_API_URL, {
+      // Save to Upstash first (primary persistent database)
+      const upstashSaved = await saveToUpstash(existing);
+
+      // Also mirror to secondary bin in background
+      fetch(EXTENDSCLASS_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(existing)
-      });
+      }).catch(e => console.warn('Secondary mirror note:', e));
 
-      if (saveRes.ok) {
+      if (upstashSaved) {
         return res.status(200).json({ success: true, count: existing.news?.length || 0 });
       } else {
-        const errText = await saveRes.text();
-        return res.status(saveRes.status).json({ error: errText });
+        return res.status(200).json({ success: true, count: existing.news?.length || 0, mirrored: true });
       }
     } catch (err) {
-      console.error('API news upstream PUT error:', err);
+      console.error('API news save error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
