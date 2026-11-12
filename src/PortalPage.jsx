@@ -261,22 +261,53 @@ export default function PortalPage() {
     ? ((lang === 'mr' ? publishedNews[0].title_mr : (publishedNews[0].title_en || publishedNews[0].title_mr)) || 'उमरगा वार्ता')
     : (lang === 'mr' ? 'उमरगा वार्ता डिजिटल पोर्टलवर आपले स्वागत आहे.' : 'Welcome to Omerga Warta News Portal.');
 
-  const handleShareWhatsApp = (story) => {
+  const handleShareWhatsApp = async (story) => {
     if (!story) return;
     const shareUrl = `${window.location.origin}/news/${story.id}`;
     const title = (lang === 'mr' ? story.title_mr : (story.title_en || story.title_mr)) || 'उमरगा वार्ता';
     const content = ((lang === 'mr' ? story.content_mr : (story.content_en || story.content_mr)) || '')
       .split('\n')[0]
-      .substring(0, 110);
+      .substring(0, 140);
     
-    // Crucial for WhatsApp Link Previews:
-    // When the URL is placed at the top on line 1, WhatsApp client immediately detects the link
-    // and fetches the image thumbnail into the card without text interference.
-    const text = encodeURIComponent(
-      `${shareUrl}\n\n` +
+    const captionText = 
       `*${title}*\n\n` +
       `${content ? `${content}...\n\n` : ''}` +
-      `सविस्तर बातमी वाचण्यासाठी वरील लिंक उघडा.`
+      `संपूर्ण बातमी व फोटो पाहण्यासाठी खालील लिंकवर क्लिक करा:\n` +
+      `${shareUrl}`;
+
+    // 1. MOBILE FIRST: Use Web Share API with real Image File!
+    // When sharing from mobile Chrome/Safari, this physically attaches the REAL JPEG IMAGE
+    // directly into WhatsApp as a media post (with the news image on top and caption below)!
+    if (navigator.share && story.image) {
+      try {
+        const imageUrl = `/images/${story.id}.jpg`;
+        const res = await fetch(imageUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const imageFile = new File([blob], `omerga_${story.id}.jpg`, { type: 'image/jpeg' });
+          
+          if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+            await navigator.share({
+              files: [imageFile],
+              title: title,
+              text: captionText
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        // If user cancelled or file sharing failed, seamlessly fall back to link sharing
+        if (err.name === 'AbortError') return;
+        console.warn('Native image share fallback:', err);
+      }
+    }
+
+    // 2. DESKTOP / FALLBACK: Open WhatsApp Web with formatted broadcast text & preview link
+    const text = encodeURIComponent(
+      `*${title}*\n\n` +
+      `${content ? `${content}...\n\n` : ''}` +
+      `संपूर्ण बातमी व फोटो पाहण्यासाठी खालील लिंकवर क्लिक करा:\n` +
+      `${shareUrl}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
