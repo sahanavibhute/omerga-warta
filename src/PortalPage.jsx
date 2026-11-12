@@ -280,6 +280,11 @@ export default function PortalPage() {
     // directly into WhatsApp as a media post (with the news image on top and caption below)!
     if (navigator.share && story.image) {
       try {
+        // Automatically copy formatted text & link to user clipboard as safety backup
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(captionText).catch(() => {});
+        }
+
         const imageUrl = `/images/${story.id}.jpg`;
         const res = await fetch(imageUrl);
         if (res.ok) {
