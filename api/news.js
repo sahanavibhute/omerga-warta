@@ -29,14 +29,18 @@ const EXTENDSCLASS_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff'
 
 async function fetchFromUpstash() {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
     const res = await fetch(UPSTASH_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${UPSTASH_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(['GET', 'omerga_news_data'])
+      body: JSON.stringify(['GET', 'omerga_news_data']),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     if (res.ok) {
       const data = await res.json();
       if (data && data.result) {
@@ -44,24 +48,27 @@ async function fetchFromUpstash() {
       }
     }
   } catch (e) {
-    console.warn('Upstash GET error:', e);
+    // Upstash failed or timed out - silently fall through to ExtendsClass
   }
   return null;
 }
 
 async function saveToUpstash(data) {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
     const res = await fetch(UPSTASH_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${UPSTASH_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(['SET', 'omerga_news_data', JSON.stringify(data)])
+      body: JSON.stringify(['SET', 'omerga_news_data', JSON.stringify(data)]),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     return res.ok;
   } catch (e) {
-    console.warn('Upstash SET error:', e);
     return false;
   }
 }
@@ -154,21 +161,17 @@ export default async function handler(req, res) {
         existing = payload.full;
       }
 
-      // Save to Upstash first (primary persistent database)
-      const upstashSaved = await saveToUpstash(existing);
+      // Save to Upstash if reachable
+      saveToUpstash(existing).catch(() => {});
 
-      // Also mirror to secondary bin in background
-      fetch(EXTENDSCLASS_URL, {
+      // ALWAYS save directly to persistent ExtendsClass cloud bin
+      const extendsRes = await fetch(EXTENDSCLASS_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(existing)
-      }).catch(e => console.warn('Secondary mirror note:', e));
+      });
 
-      if (upstashSaved) {
-        return res.status(200).json({ success: true, count: existing.news?.length || 0 });
-      } else {
-        return res.status(200).json({ success: true, count: existing.news?.length || 0, mirrored: true });
-      }
+      return res.status(200).json({ success: true, count: existing.news?.length || 0, saved: extendsRes.ok });
     } catch (err) {
       console.error('API news save error:', err);
       return res.status(500).json({ error: err.message });

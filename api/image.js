@@ -6,27 +6,7 @@ const UPSTASH_TOKEN = 'gQAAAAAAASKqAQIgcDIyM2ZmNGZlMWUzZTY0YjZjODBhZTliYjVlNTMyZ
 const EXTENDSCLASS_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
 
 async function getArticleById(id) {
-  // 1. Upstash primary
-  try {
-    const res = await fetch(UPSTASH_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${UPSTASH_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(['GET', 'omerga_news_data'])
-    });
-    if (res.ok) {
-      const resp = await res.json();
-      if (resp && resp.result) {
-        const data = JSON.parse(resp.result);
-        const found = (data?.news || []).find(item => String(item.id) === String(id));
-        if (found) return found;
-      }
-    }
-  } catch (e) {}
-
-  // 2. ExtendsClass fallback
+  // 1. Fetch from persistent ExtendsClass bin
   try {
     const upstream = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
       headers: { 'Cache-Control': 'no-cache' }
@@ -43,6 +23,30 @@ async function getArticleById(id) {
         } catch (retryErr) {
           end = raw.lastIndexOf('}', end - 1);
         }
+      }
+    }
+  } catch (e) {}
+
+  // 2. Try Upstash if reachable
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(UPSTASH_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${UPSTASH_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['GET', 'omerga_news_data']),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const resp = await res.json();
+      if (resp && resp.result) {
+        const data = JSON.parse(resp.result);
+        const found = (data?.news || []).find(item => String(item.id) === String(id));
+        if (found) return found;
       }
     }
   } catch (e) {}
