@@ -85,13 +85,7 @@ export default async function handler(req, res) {
 
   // GET: Fetch real-time articles, rashi, and ads
   if (req.method === 'GET') {
-    // 1. Primary: High-speed Upstash Serverless Database
-    const upstashData = await fetchFromUpstash();
-    if (upstashData && (Array.isArray(upstashData.news) || Array.isArray(upstashData.rashi))) {
-      return res.status(200).json(upstashData);
-    }
-
-    // 2. Secondary Fallback: ExtendsClass Bin
+    // 1. Primary: Persistent ExtendsClass Cloud Bin (immediate 0ms delay, rock-solid)
     try {
       const upstreamRes = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
         headers: { 'Cache-Control': 'no-cache' }
@@ -100,13 +94,19 @@ export default async function handler(req, res) {
         const raw = await upstreamRes.text();
         const data = parseRobustJson(raw);
         if (data && (Array.isArray(data.news) || Array.isArray(data.rashi))) {
-          // Sync into Upstash in background
+          // Sync to Upstash in background if available
           saveToUpstash(data).catch(() => {});
           return res.status(200).json(data);
         }
       }
     } catch (err) {
-      console.warn('Extendsclass fallback GET error:', err);
+      console.warn('ExtendsClass primary GET note:', err);
+    }
+
+    // 2. Secondary Fallback: Upstash Serverless Database
+    const upstashData = await fetchFromUpstash();
+    if (upstashData && (Array.isArray(upstashData.news) || Array.isArray(upstashData.rashi))) {
+      return res.status(200).json(upstashData);
     }
 
     return res.status(200).json({ news: [], rashi: [], ads: null });
@@ -120,20 +120,24 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Payload required' });
       }
 
-      // Fetch existing data from Upstash first (fastest and most reliable)
-      let existing = await fetchFromUpstash();
+      // 1. Fetch existing data from persistent ExtendsClass bin first
+      let existing = null;
+      try {
+        const existingRes = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (existingRes.ok) {
+          const raw = await existingRes.text();
+          existing = parseRobustJson(raw);
+        }
+      } catch (e) {}
+
+      // Fallback to Upstash if ExtendsClass was empty
+      if (!existing) {
+        existing = await fetchFromUpstash();
+      }
       if (!existing) {
         existing = { news: [], rashi: [], ads: null };
-        try {
-          const existingRes = await fetch(`${EXTENDSCLASS_URL}?t=${Date.now()}`, {
-            headers: { 'Cache-Control': 'no-cache' }
-          });
-          if (existingRes.ok) {
-            const raw = await existingRes.text();
-            const parsed = parseRobustJson(raw);
-            if (parsed) existing = parsed;
-          }
-        } catch (e) {}
       }
 
       // Merge payload
