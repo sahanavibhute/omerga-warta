@@ -1,3 +1,24 @@
+function parseRobustJson(str) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const match = str.match(/\{[\s\S]*\}/);
+    if (match) {
+      let candidate = match[0];
+      let end = candidate.lastIndexOf('}');
+      while (end > 0) {
+        try {
+          return JSON.parse(candidate.slice(0, end + 1));
+        } catch (err) {
+          candidate = candidate.slice(0, end);
+          end = candidate.lastIndexOf('}');
+        }
+      }
+    }
+  }
+  return null;
+}
+
 /**
  * Universal Multi-Tier Image Uploader
  * 
@@ -155,7 +176,8 @@ export async function uploadImageToCloud(imageInput, onProgress) {
       body: JSON.stringify({ image: base64Data })
     });
     if (binRes.ok) {
-      const binData = await binRes.json();
+      const rawText = await binRes.text();
+      const binData = parseRobustJson(rawText);
       if (binData && binData.id) {
         const url = `https://extendsclass.com/api/json-storage/bin/${binData.id}`;
         if (onProgress) onProgress('✓ फोटो क्लाउडवर सेव्ह झाला!');

@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
 
+function parseRobustJson(str) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const match = str.match(/\{[\s\S]*\}/);
+    if (match) {
+      let candidate = match[0];
+      let end = candidate.lastIndexOf('}');
+      while (end > 0) {
+        try {
+          return JSON.parse(candidate.slice(0, end + 1));
+        } catch (err) {
+          candidate = candidate.slice(0, end);
+          end = candidate.lastIndexOf('}');
+        }
+      }
+    }
+  }
+  return null;
+}
+
 // Cache for resolved cloud image bins
 const imageCache = new Map();
 
@@ -39,8 +60,9 @@ export default function CloudImage({ src, alt, className, style, onError }) {
       }
 
       fetch(src)
-        .then(res => res.json())
-        .then(data => {
+        .then(res => res.text())
+        .then(rawText => {
+          const data = parseRobustJson(rawText);
           if (data && (data.image || data.url)) {
             const actualImage = data.image || data.url;
             imageCache.set(src, actualImage);

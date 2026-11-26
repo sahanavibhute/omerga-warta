@@ -8,6 +8,27 @@ export const config = {
   }
 };
 
+function parseRobustJson(str) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const match = str.match(/\{[\s\S]*\}/);
+    if (match) {
+      let candidate = match[0];
+      let end = candidate.lastIndexOf('}');
+      while (end > 0) {
+        try {
+          return JSON.parse(candidate.slice(0, end + 1));
+        } catch (err) {
+          candidate = candidate.slice(0, end);
+          end = candidate.lastIndexOf('}');
+        }
+      }
+    }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -72,7 +93,8 @@ export default async function handler(req, res) {
       });
 
       if (createBinRes.ok) {
-        const binJson = await createBinRes.json();
+        const rawText = await createBinRes.text();
+        const binJson = parseRobustJson(rawText);
         if (binJson && binJson.id) {
           const directUrl = `https://extendsclass.com/api/json-storage/bin/${binJson.id}`;
           return res.status(200).json({

@@ -76,8 +76,9 @@ export default async function handler(req, res) {
         if (rawSrc.includes('extendsclass.com/api/json-storage/bin/')) {
           const binRes = await fetch(rawSrc);
           if (binRes.ok) {
-            const binJson = await binRes.json();
-            rawSrc = binJson.image || binJson.url || rawSrc;
+            const rawText = await binRes.text();
+            const binJson = parseRobustJson(rawText);
+            rawSrc = binJson?.image || binJson?.url || rawSrc;
           }
         }
 
