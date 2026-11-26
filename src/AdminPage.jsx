@@ -338,8 +338,9 @@ export default function AdminPage() {
       });
 
       setNews(updated);
-      // Immediately persist to Cloud Database
-      saveNewsToCloud(updated);
+      showToast('क्लाउडवर सेव्ह होत आहे...');
+      // Immediately persist to Cloud Database and verify receipt
+      const isSaved = await saveNewsToCloud(updated);
 
       updateNewsInSupabase(editingNewsId, {
         title_mr: formNews.title_mr,
@@ -352,7 +353,11 @@ export default function AdminPage() {
         status: publishStatus
       }).catch(() => {});
 
-      showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'बातमी यशस्वीरीत्या अपडेट करण्यात आली!');
+      if (isSaved) {
+        showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'बातमी यशस्वीरीत्या थेट प्रकाशित झाली!');
+      } else {
+        alert('सूचना: बातमी सेव्ह करताना क्लाउड नेटवर्क एरर आली. कृपया पुन्हा "प्रकाशित करा" वर क्लिक करा.');
+      }
     } else {
       const now = Date.now();
       const newEntry = {
@@ -375,11 +380,16 @@ export default function AdminPage() {
       const updatedNewsList = [newEntry, ...news];
       setNews(updatedNewsList);
 
-      // Immediately persist to Cloud Database (Upstash primary + ExtendsClass fallback)
-      saveNewsToCloud(updatedNewsList);
+      showToast('क्लाउडवर थेट प्रकाशित होत आहे...');
+      // Await confirmation directly from the cloud server
+      const isSaved = await saveNewsToCloud(updatedNewsList);
 
       addNewsToSupabase(newEntry).catch(() => {});
-      showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'नवीन बातमी यशस्वीरीत्या प्रकाशित झाली!');
+      if (isSaved) {
+        showToast(publishStatus === 'draft' ? 'बातमी मसुदा (Draft) म्हणून सेव्ह केली!' : 'नवीन बातमी यशस्वीरीत्या थेट प्रकाशित झाली!');
+      } else {
+        alert('लक्ष द्या: बातमी क्लाउडवर सेव्ह झाली नाही. इंटरनेट तपासा व पुन्हा सेव्ह करा.');
+      }
     }
 
     setEditingNewsId(null);
