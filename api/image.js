@@ -5,6 +5,27 @@ const UPSTASH_URL = 'https://feasible-halibut-74410.upstash.io';
 const UPSTASH_TOKEN = 'gQAAAAAAASKqAQIgcDIyM2ZmNGZlMWUzZTY0YjZjODBhZTliYjVlNTMyZTAwNw';
 const EXTENDSCLASS_URL = 'https://extendsclass.com/api/json-storage/bin/edbeaff';
 
+function parseRobustJson(str) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const match = str.match(/\{[\s\S]*\}/);
+    if (match) {
+      let candidate = match[0];
+      let end = candidate.lastIndexOf('}');
+      while (end > 0) {
+        try {
+          return JSON.parse(candidate.slice(0, end + 1));
+        } catch (err) {
+          candidate = candidate.slice(0, end);
+          end = candidate.lastIndexOf('}');
+        }
+      }
+    }
+  }
+  return null;
+}
+
 async function getArticleById(id) {
   // 1. Fetch from persistent ExtendsClass bin
   try {
