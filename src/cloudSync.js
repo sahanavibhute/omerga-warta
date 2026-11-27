@@ -7,9 +7,10 @@ const STORAGE_API_URL = `https://extendsclass.com/api/json-storage/bin/${STORAGE
 
 /**
  * Retention Policy:
- * Preserves all posts up to 1000.
- * Only if the total exceeds 1000, automatically trims the oldest entries past 1000.
- * Under 1000 posts, NOTHING is deleted.
+ * Preserves all posts up to exactly 15 posts.
+ * Unless and until total posts reach 15, NOTHING is deleted.
+ * Once 15 posts are reached, the system strictly and slowly trims the oldest entry (FIFO)
+ * as each new post is added, keeping the latest 15 posts safe and under cloud limits.
  */
 export function filterOlderThanOneWeek(items) {
   if (!Array.isArray(items)) return [];
@@ -20,9 +21,9 @@ export function filterOlderThanOneWeek(items) {
     return true;
   });
 
-  // Strictly enforce 1000 post capacity limit (FIFO - First In, First Out)
-  if (valid.length > 1000) {
-    return valid.slice(0, 1000);
+  // Strictly enforce 15 post capacity limit (FIFO - First In, First Out)
+  if (valid.length > 15) {
+    return valid.slice(0, 15);
   }
   return valid;
 }

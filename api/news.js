@@ -142,12 +142,11 @@ export default async function handler(req, res) {
 
       // Merge payload
       if (Array.isArray(payload.news)) {
-        // Strict FIFO Retention Policy:
-        // Only trigger auto-deletion when total posts EXCEED 1000.
-        // Never delete anything if post count <= 1000.
-        // When exceeding 1000, keep exactly the freshest 1000 posts (newest first).
-        if (payload.news.length > 1000) {
-          existing.news = payload.news.slice(0, 1000);
+        // Strict 15-Post FIFO Retention Policy:
+        // Do not delete anything until 15 posts are posted.
+        // Once total posts exceed 15, slowly trim the oldest past 15 (keep newest 15).
+        if (payload.news.length > 15) {
+          existing.news = payload.news.slice(0, 15);
         } else {
           existing.news = payload.news;
         }
@@ -162,6 +161,9 @@ export default async function handler(req, res) {
         existing.ads = payload.ads;
       }
       if (payload.full) {
+        if (Array.isArray(payload.full.news) && payload.full.news.length > 15) {
+          payload.full.news = payload.full.news.slice(0, 15);
+        }
         existing = payload.full;
       }
 
