@@ -314,21 +314,17 @@ export default function AdminPage() {
     const postTime = nowObj.toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     const formattedPostDateTime = `${todayDate} • ${postTime}`;
 
-    const autoTitleEn = autoTranslateMarathiToEnglish(formNews.title_mr);
-    const autoContentEn = autoTranslateMarathiToEnglish(formNews.content_mr);
-    const autoCategoryEn = autoTranslateCategory(formNews.category_mr);
-
     if (editingNewsId) {
       const updated = news.map(item => {
         if (item.id === editingNewsId) {
           return {
             ...item,
             title_mr: formNews.title_mr,
-            title_en: autoTitleEn,
+            title_en: '',
             category_mr: formNews.category_mr,
-            category_en: autoCategoryEn,
+            category_en: '',
             content_mr: formNews.content_mr,
-            content_en: autoContentEn,
+            content_en: '',
             image: finalImageUrl,
             status: publishStatus,
             updatedAt: Date.now()
@@ -344,11 +340,11 @@ export default function AdminPage() {
 
       updateNewsInSupabase(editingNewsId, {
         title_mr: formNews.title_mr,
-        title_en: autoTitleEn,
+        title_en: '',
         category_mr: formNews.category_mr,
-        category_en: autoCategoryEn,
+        category_en: '',
         content_mr: formNews.content_mr,
-        content_en: autoContentEn,
+        content_en: '',
         image: finalImageUrl,
         status: publishStatus
       }).catch(() => {});
@@ -364,11 +360,11 @@ export default function AdminPage() {
         id: now,
         createdAt: now,
         title_mr: formNews.title_mr,
-        title_en: autoTitleEn,
+        title_en: '',
         category_mr: formNews.category_mr,
-        category_en: autoCategoryEn,
+        category_en: '',
         content_mr: formNews.content_mr,
-        content_en: autoContentEn,
+        content_en: '',
         image: finalImageUrl,
         date: formattedPostDateTime,
         views: 150,
