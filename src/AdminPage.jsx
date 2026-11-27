@@ -689,7 +689,7 @@ export default function AdminPage() {
                     <input 
                       type="file" 
                       ref={fileInputRef}
-                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      accept="image/*"
                       onChange={handleImageFileUpload}
                       style={{ display: 'none' }}
                     />

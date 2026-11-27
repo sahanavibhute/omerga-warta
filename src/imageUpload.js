@@ -31,22 +31,25 @@ function parseRobustJson(str) {
 export function validateImageFile(file) {
   if (!file) return { valid: false, error: 'कृपया फोटो निवडा (Please select an image file).' };
 
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  // Allow any image/* MIME type or common extensions from mobile cameras/galleries
   const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
-  const validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp'];
 
-  if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
+  const isImageType = file.type ? file.type.startsWith('image/') : false;
+  const isValidExt = validExtensions.includes(ext);
+
+  if (!isImageType && !isValidExt) {
     return {
       valid: false,
-      error: 'अवैध फाइल फॉरमॅट! फक्त JPG, JPEG, PNG आणि WebP फोटो चालतील.'
+      error: 'अवैध फाइल फॉरमॅट! कृपया JPG, PNG किंवा WebP फोटो निवडा.'
     };
   }
 
-  const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+  const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25MB (permits high-res mobile camera photos)
   if (file.size > MAX_SIZE_BYTES) {
     return {
       valid: false,
-      error: 'फोटोची साइज 10MB पेक्षा जास्त आहे. कृपया लहान फोटो निवडा.'
+      error: 'फोटोची साइज 25MB पेक्षा जास्त आहे. कृपया लहान फोटो निवडा.'
     };
   }
 
